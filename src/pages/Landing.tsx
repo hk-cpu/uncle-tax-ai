@@ -11,10 +11,10 @@ import {
   Zap,
   CheckCircle,
   ArrowRight,
-  Loader2
+  Loader2,
+  Menu
 } from "lucide-react";
 import { useNavigate } from "react-router";
-import { Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
 
