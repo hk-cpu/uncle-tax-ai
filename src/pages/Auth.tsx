@@ -30,6 +30,16 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState<string | null>(null);
+
+  // Simple email validator
+  function validateEmail(value: string) {
+    // Standard robust email regex
+    const re =
+      /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
+    return re.test(value.trim());
+  }
 
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
@@ -37,10 +47,22 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
       navigate(redirect);
     }
   }, [authLoading, isAuthenticated, navigate, redirectAfterAuth]);
+
   const handleEmailSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    // Validate before submitting
+    if (!email.trim()) {
+      setEmailError("Email is required.");
+      return;
+    }
+    if (!validateEmail(email)) {
+      setEmailError("Please enter a valid email address.");
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
+    setEmailError(null);
     try {
       const formData = new FormData(event.currentTarget);
       await signIn("email-otp", formData);
@@ -103,7 +125,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
       {/* Auth Content */}
       <div className="flex-1 flex items-center justify-center">
         <div className="flex items-center justify-center h-full flex-col">
-        <Card className="min-w-[350px] pb-0 border shadow-md">
+        <Card className="min-w[350px] pb-0 border shadow-md">
           {step === "signIn" ? (
             <>
               <CardHeader className="text-center">
@@ -122,9 +144,8 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                   Enter your email to log in or sign up
                 </CardDescription>
               </CardHeader>
-              <form onSubmit={handleEmailSubmit}>
+              <form onSubmit={handleEmailSubmit} noValidate>
                 <CardContent>
-                  
                   <div className="relative flex items-center gap-2">
                     <div className="relative flex-1">
                       <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -135,13 +156,31 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                         className="pl-9"
                         disabled={isLoading}
                         required
+                        value={email}
+                        onChange={(e) => {
+                          setEmail(e.target.value);
+                          if (emailError) setEmailError(null);
+                        }}
+                        onBlur={() => {
+                          if (!email.trim()) {
+                            setEmailError("Email is required.");
+                          } else if (!validateEmail(email)) {
+                            setEmailError("Please enter a valid email address.");
+                          } else {
+                            setEmailError(null);
+                          }
+                        }}
+                        aria-invalid={emailError ? "true" : "false"}
                       />
+                      {emailError && (
+                        <p className="mt-1 text-xs text-red-500">{emailError}</p>
+                      )}
                     </div>
                     <Button
                       type="submit"
                       variant="outline"
                       size="icon"
-                      disabled={isLoading}
+                      disabled={isLoading || !email || !!emailError || !validateEmail(email)}
                     >
                       {isLoading ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
