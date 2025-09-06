@@ -225,3 +225,57 @@ export const createFromWhatsApp = internalMutation({
     });
   },
 });
+
+export const checkRateLimit = internalMutation({
+  args: { phoneNumber: v.string() },
+  handler: async (ctx, args) => {
+    const WINDOW_MS = 60_000; // 1 minute
+    const LIMIT = 15;
+
+    let session: any = null;
+    const q = ctx.db.query("whatsappSessions").withIndex("by_phone", (q) => q.eq("phoneNumber", args.phoneNumber));
+    // Get first session if exists
+    for await (const row of q) {
+      session = row;
+      break;
+    }
+
+    const now = Date.now();
+
+    // Create a new session if none
+    if (!session) {
+      await ctx.db.insert("whatsappSessions", {
+        phoneNumber: args.phoneNumber,
+        userId: undefined,
+        isActive: true,
+        lastMessageTime: now,
+        messageCount: 1,
+      });
+      return { blocked: false as const };
+    }
+
+    const elapsed = now - session.lastMessageTime;
+    if (elapsed > WINDOW_MS) {
+      // Reset window
+      await ctx.db.patch(session._id, {
+        lastMessageTime: now,
+        messageCount: 1,
+      });
+      return { blocked: false as const };
+    }
+
+    const nextCount = (session.messageCount ?? 0) + 1;
+    if (nextCount > LIMIT) {
+      const retryAfterMs = Math.max(0, WINDOW_MS - elapsed);
+      // Keep the existing window; do not increment count further
+      return { blocked: true as const, retryAfterMs };
+    }
+
+    await ctx.db.patch(session._id, {
+      lastMessageTime: now,
+      messageCount: nextCount,
+    });
+
+    return { blocked: false as const };
+  },
+});

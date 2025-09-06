@@ -3,6 +3,7 @@
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
 import { api } from "./_generated/api";
+import { internal } from "./_generated/api";
 
 const http = typeof (globalThis as any).__httpRouter !== "undefined"
   ? (globalThis as any).__httpRouter
@@ -117,6 +118,21 @@ http.route({
           if (!messageId || !messageText || !phoneNumber) {
             console.warn("Skipping malformed message", { messageId, hasText: !!messageText, phoneNumber });
             continue;
+          }
+
+          // Rate limit per phone number before any processing
+          try {
+            const rl = await ctx.runMutation(internal.whatsapp.checkRateLimit, { phoneNumber });
+            if (rl?.blocked) {
+              const waitSec = Math.ceil((rl.retryAfterMs ?? 0) / 1000);
+              await sendWhatsAppText(
+                phoneNumber,
+                `⏱️ Please slow down. Try again in ${waitSec}s.`
+              );
+              continue; // Skip processing this message
+            }
+          } catch (rateErr) {
+            console.error("Rate limit check failed; proceeding without block", rateErr);
           }
 
           const result = await ctx.runAction(api.whatsapp.processMessage, {
