@@ -15,6 +15,11 @@ import "./types/global.d.ts";
 
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
 
+ // Ensure light theme by default
+if (typeof document !== "undefined") {
+  document.documentElement.classList.remove("dark");
+}
+
 function RouteSyncer() {
   const location = useLocation();
   useEffect(() => {

@@ -11,10 +11,10 @@ import {
   Zap,
   CheckCircle,
   ArrowRight,
-  Loader2
+  Loader2,
+  Menu
 } from "lucide-react";
 import { useNavigate } from "react-router";
-import { Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
 
@@ -104,6 +104,7 @@ export default function Landing() {
                     try { navigate("/dashboard"); } finally { setCtaLoading(false); }
                   }}
                   disabled={ctaLoading}
+                  className="bg-gradient-to-r from-blue-600 to-purple-600"
                 >
                   {ctaLoading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Redirecting…</>) : "Dashboard"}
                 </Button>
@@ -114,6 +115,7 @@ export default function Landing() {
                     try { navigate("/auth"); } finally { setCtaLoading(false); }
                   }}
                   disabled={ctaLoading}
+                  className="bg-gradient-to-r from-blue-600 to-purple-600"
                 >
                   {ctaLoading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading…</>) : "Get Started"}
                 </Button>
@@ -159,6 +161,7 @@ export default function Landing() {
                             try { navigate(isAuthenticated ? "/dashboard" : "/auth"); } finally { setCtaLoading(false); }
                           }}
                           disabled={ctaLoading}
+                          className="w-full bg-gradient-to-r from-blue-600 to-purple-600"
                         >
                           {ctaLoading ? (
                             <>
@@ -176,6 +179,7 @@ export default function Landing() {
                             try { navigate("/auth"); } finally { setCtaLoading(false); }
                           }}
                           disabled={ctaLoading}
+                          className="w-full bg-gradient-to-r from-blue-600 to-purple-600"
                         >
                           {ctaLoading ? (
                             <>
@@ -232,6 +236,7 @@ export default function Landing() {
                   try { navigate(isAuthenticated ? "/dashboard" : "/auth"); } finally { setCtaLoading(false); }
                 }}
                 disabled={ctaLoading}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-lg px-8 py-6"
               >
                 {ctaLoading ? (
                   <>
@@ -263,8 +268,8 @@ export default function Landing() {
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-4xl mx-auto">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="text-center">
-                    <div className="bg-gray-100 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                      <MessageSquare className="h-8 w-8 text-gray-800" />
+                    <div className="bg-green-100 dark:bg-green-900 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                      <MessageSquare className="h-8 w-8 text-green-600" />
                     </div>
                     <h3 className="font-semibold mb-2">Send via WhatsApp</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -272,8 +277,8 @@ export default function Landing() {
                     </p>
                   </div>
                   <div className="text-center">
-                    <div className="bg-gray-100 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                      <Calculator className="h-8 w-8 text-gray-800" />
+                    <div className="bg-blue-100 dark:bg-blue-900 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                      <Calculator className="h-8 w-8 text-blue-600" />
                     </div>
                     <h3 className="font-semibold mb-2">AI Processes</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -281,8 +286,8 @@ export default function Landing() {
                     </p>
                   </div>
                   <div className="text-center">
-                    <div className="bg-gray-100 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                      <FileText className="h-8 w-8 text-gray-800" />
+                    <div className="bg-purple-100 dark:bg-purple-900 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                      <FileText className="h-8 w-8 text-purple-600" />
                     </div>
                     <h3 className="font-semibold mb-2">Get Reports</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -297,7 +302,7 @@ export default function Landing() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 bg-white/50 dark:bg-gray-800/50">
+      <section id="features" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
@@ -318,8 +323,8 @@ export default function Landing() {
               >
                 <Card className="h-full hover:shadow-lg transition-shadow duration-300">
                   <CardHeader>
-                    <div className="bg-gray-100 p-3 rounded-lg w-fit">
-                      <feature.icon className="h-6 w-6 text-gray-800" />
+                    <div className="bg-gradient-to-r from-blue-500 to-purple-500 p-3 rounded-lg w-fit">
+                      <feature.icon className="h-6 w-6 text-white" />
                     </div>
                     <CardTitle className="text-xl">{feature.title}</CardTitle>
                   </CardHeader>
@@ -369,7 +374,7 @@ export default function Landing() {
               transition={{ delay: 0.4 }}
               className="relative"
             >
-              <div className="bg-white rounded-2xl p-8 text-gray-900 border">
+              <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-8 text-white">
                 <h3 className="text-2xl font-bold mb-4">Ready to Get Started?</h3>
                 <p className="text-blue-100 mb-6">
                   Join thousands of shopkeepers who have simplified their tax management with UNCLE.
@@ -377,7 +382,7 @@ export default function Landing() {
                 <Button 
                   size="lg" 
                   onClick={() => navigate(isAuthenticated ? "/dashboard" : "/auth")}
-                  className="w-full"
+                  className="bg-white text-blue-600 hover:bg-gray-100 w-full"
                 >
                   {isAuthenticated ? "Go to Dashboard" : "Start Your Free Trial"}
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -389,7 +394,7 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-white text-gray-700 py-12 border-t">
+      <footer className="bg-white text-gray-700 border-t py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <div className="flex items-center justify-center space-x-3 mb-4">
