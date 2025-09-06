@@ -10,15 +10,17 @@ import {
   Globe, 
   Zap,
   CheckCircle,
-  ArrowRight
+  ArrowRight,
+  Loader2
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { Menu } from "lucide-react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { useState } from "react";
 
 export default function Landing() {
   const { isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const features = [
     {
@@ -106,50 +108,82 @@ export default function Landing() {
             </div>
 
             {/* Mobile Menu */}
-            <div className="md:hidden">
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="outline" size="icon" aria-label="Open menu">
-                    <Menu className="h-5 w-5" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="right" className="w-72">
-                  <SheetHeader>
-                    <SheetTitle className="flex items-center gap-2">
-                      <img
-                        src="https://harmless-tapir-303.convex.cloud/api/storage/bcbdad4d-5195-48b1-9334-b7c21a475144"
-                        alt="UNCLE logo"
-                        className="h-8 w-auto rounded-md"
-                      />
-                      UNCLE
-                    </SheetTitle>
-                  </SheetHeader>
-                  <div className="mt-6 flex flex-col gap-3">
-                    <a href="#hero" className="text-base text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400">
+            <div className="md:hidden relative">
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label="Open menu"
+                onClick={() => setMobileOpen((v) => !v)}
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+
+              {mobileOpen && (
+                <div
+                  className="absolute right-0 mt-3 w-72 rounded-lg border bg-white dark:bg-gray-900 shadow-lg p-4 z-50"
+                  role="menu"
+                >
+                  <div className="flex items-center gap-2">
+                    <img
+                      src="https://harmless-tapir-303.convex.cloud/api/storage/bcbdad4d-5195-48b1-9334-b7c21a475144"
+                      alt="UNCLE logo"
+                      className="h-8 w-auto rounded-md"
+                    />
+                    <span className="font-semibold">UNCLE</span>
+                  </div>
+                  <div className="mt-4 flex flex-col gap-3">
+                    <a
+                      href="#hero"
+                      className="text-base text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400"
+                      onClick={() => setMobileOpen(false)}
+                    >
                       Hero
                     </a>
-                    <a href="#features" className="text-base text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400">
+                    <a
+                      href="#features"
+                      className="text-base text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400"
+                      onClick={() => setMobileOpen(false)}
+                    >
                       Features
                     </a>
-                    <a href="#benefits" className="text-base text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400">
+                    <a
+                      href="#benefits"
+                      className="text-base text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400"
+                      onClick={() => setMobileOpen(false)}
+                    >
                       Benefits
                     </a>
                     <div className="pt-4">
                       {isLoading ? (
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                        <Button disabled className="w-full bg-gradient-to-r from-blue-600 to-purple-600">
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Loading...
+                        </Button>
                       ) : isAuthenticated ? (
-                        <Button onClick={() => navigate("/dashboard")} className="w-full bg-gradient-to-r from-blue-600 to-purple-600">
+                        <Button
+                          onClick={() => {
+                            setMobileOpen(false);
+                            navigate("/dashboard");
+                          }}
+                          className="w-full bg-gradient-to-r from-blue-600 to-purple-600"
+                        >
                           Dashboard
                         </Button>
                       ) : (
-                        <Button onClick={() => navigate("/auth")} className="w-full bg-gradient-to-r from-blue-600 to-purple-600">
+                        <Button
+                          onClick={() => {
+                            setMobileOpen(false);
+                            navigate("/auth");
+                          }}
+                          className="w-full bg-gradient-to-r from-blue-600 to-purple-600"
+                        >
                           Get Started
                         </Button>
                       )}
                     </div>
                   </div>
-                </SheetContent>
-              </Sheet>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -188,9 +222,19 @@ export default function Landing() {
                 size="lg" 
                 onClick={() => navigate(isAuthenticated ? "/dashboard" : "/auth")}
                 className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-lg px-8 py-6"
+                disabled={isLoading}
               >
-                {isAuthenticated ? "Go to Dashboard" : "Start Free Trial"}
-                <ArrowRight className="ml-2 h-5 w-5" />
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  <>
+                    {isAuthenticated ? "Go to Dashboard" : "Start Free Trial"}
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </>
+                )}
               </Button>
               <Button 
                 size="lg" 
