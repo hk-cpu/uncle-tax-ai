@@ -13,6 +13,8 @@ import {
   ArrowRight
 } from "lucide-react";
 import { useNavigate } from "react-router";
+import { Menu } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 export default function Landing() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -74,12 +76,22 @@ export default function Landing() {
               <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-xl">
                 <Calculator className="h-6 w-6 text-white" />
               </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent cursor-pointer" onClick={() => navigate("/")}>
                 UNCLE
               </span>
             </div>
             
-            <div className="flex items-center space-x-4">
+            {/* Desktop Nav */}
+            <div className="hidden md:flex items-center space-x-6">
+              <a href="#hero" className="text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">
+                Hero
+              </a>
+              <a href="#features" className="text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">
+                Features
+              </a>
+              <a href="#benefits" className="text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">
+                Benefits
+              </a>
               {isLoading ? (
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
               ) : isAuthenticated ? (
@@ -92,12 +104,57 @@ export default function Landing() {
                 </Button>
               )}
             </div>
+
+            {/* Mobile Menu */}
+            <div className="md:hidden">
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="icon" aria-label="Open menu">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-72">
+                  <SheetHeader>
+                    <SheetTitle className="flex items-center gap-2">
+                      <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-xl">
+                        <Calculator className="h-5 w-5 text-white" />
+                      </div>
+                      UNCLE
+                    </SheetTitle>
+                  </SheetHeader>
+                  <div className="mt-6 flex flex-col gap-3">
+                    <a href="#hero" className="text-base text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400">
+                      Hero
+                    </a>
+                    <a href="#features" className="text-base text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400">
+                      Features
+                    </a>
+                    <a href="#benefits" className="text-base text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400">
+                      Benefits
+                    </a>
+                    <div className="pt-4">
+                      {isLoading ? (
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                      ) : isAuthenticated ? (
+                        <Button onClick={() => navigate("/dashboard")} className="w-full bg-gradient-to-r from-blue-600 to-purple-600">
+                          Dashboard
+                        </Button>
+                      ) : (
+                        <Button onClick={() => navigate("/auth")} className="w-full bg-gradient-to-r from-blue-600 to-purple-600">
+                          Get Started
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
           </div>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden py-20">
+      <section id="hero" className="relative overflow-hidden py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <motion.div
@@ -181,7 +238,7 @@ export default function Landing() {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 bg-white/50 dark:bg-gray-800/50">
+      <section id="features" className="py-20 bg-white/50 dark:bg-gray-800/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
@@ -220,7 +277,7 @@ export default function Landing() {
       </section>
 
       {/* Benefits Section */}
-      <section className="py-20">
+      <section id="benefits" className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <motion.div
