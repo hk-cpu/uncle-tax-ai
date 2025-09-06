@@ -12,50 +12,62 @@ export const processMessage = action({
     messageId: v.string(),
   },
   handler: async (ctx, args) => {
-    const text = args.message.trim();
-    const lower = text.toLowerCase();
+    try {
+      const text = args.message?.trim() ?? "";
+      if (!text) {
+        return { success: false, response: "Please send a message with details, e.g., 'Sold 5 items for ₹500'." };
+      }
 
-    // Commands
-    if (lower.startsWith("undo")) {
-      const res = await ctx.runMutation(internalAny.whatsapp.deleteLastByPhone, { phoneNumber: args.phoneNumber });
-      if (res.deleted) {
+      const lower = text.toLowerCase();
+
+      // Commands
+      if (lower.startsWith("undo")) {
+        const res = await ctx.runMutation(internalAny.whatsapp.deleteLastByPhone, { phoneNumber: args.phoneNumber });
+        if (res.deleted) {
+          return {
+            success: true,
+            response: `↩️ Undone: ${res.type} of ${res.amount} (${res.description})`,
+          };
+        }
+        return { success: false, response: "Nothing to undo." };
+      }
+
+      if (lower.startsWith("balance")) {
+        const s = await ctx.runMutation(internalAny.whatsapp.getSummaryByPhone, { phoneNumber: args.phoneNumber });
         return {
           success: true,
-          response: `↩️ Undone: ${res.type} of ${res.amount} (${res.description})`,
+          response: `📊 Balance\nIncome: ${s.totalIncome}\nExpenses: ${s.totalExpenses}\nTax: ${s.totalTax}\nNet: ${s.net}`,
         };
       }
-      return { success: false, response: "Nothing to undo." };
-    }
 
-    if (lower.startsWith("balance")) {
-      const s = await ctx.runMutation(internalAny.whatsapp.getSummaryByPhone, { phoneNumber: args.phoneNumber });
-      return {
-        success: true,
-        response: `📊 Balance\nIncome: ${s.totalIncome}\nExpenses: ${s.totalExpenses}\nTax: ${s.totalTax}\nNet: ${s.net}`,
-      };
-    }
+      // Normal transaction parsing
+      const parsedTransaction = await parseTransactionMessage(args.message);
 
-    // Normal transaction parsing
-    const parsedTransaction = await parseTransactionMessage(args.message);
+      if (parsedTransaction) {
+        await ctx.runMutation(internalAny.whatsapp.createFromWhatsApp, {
+          ...parsedTransaction,
+          whatsappMessageId: args.messageId,
+          phoneNumber: args.phoneNumber,
+        });
 
-    if (parsedTransaction) {
-      await ctx.runMutation(internalAny.whatsapp.createFromWhatsApp, {
-        ...parsedTransaction,
-        whatsappMessageId: args.messageId,
-        phoneNumber: args.phoneNumber,
-      });
+        return {
+          success: true,
+          response: `✅ Recorded: ${parsedTransaction.type} of ${parsedTransaction.amount} (${parsedTransaction.category})`,
+        };
+      }
 
       return {
-        success: true,
-        response: `✅ Recorded: ${parsedTransaction.type} of ${parsedTransaction.amount} (${parsedTransaction.category})`,
+        success: false,
+        response:
+          "I couldn't understand that. Try:\n- Sold 5 items for ₹500\n- Bought supplies ₹200\nCommands: undo, balance",
+      };
+    } catch (err) {
+      console.error("processMessage error:", err);
+      return {
+        success: false,
+        response: "⚠️ Something went wrong while processing your message. Please try again.",
       };
     }
-
-    return {
-      success: false,
-      response:
-        "I couldn't understand that. Try:\n- Sold 5 items for ₹500\n- Bought supplies ₹200\nCommands: undo, balance",
-    };
   },
 });
 
