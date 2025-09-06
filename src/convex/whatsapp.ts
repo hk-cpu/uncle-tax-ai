@@ -13,47 +13,56 @@ export const processMessage = action({
   },
   handler: async (ctx, args) => {
     try {
-      const text = args.message?.trim() ?? "";
-      if (!text) {
-        return { success: false, response: "Please send a message with details, e.g., 'Sold 5 items for ₹500'." };
-      }
-
+      const text = args.message.trim();
       const lower = text.toLowerCase();
 
-      // Commands
       if (lower.startsWith("undo")) {
-        const res = await ctx.runMutation(internalAny.whatsapp.deleteLastByPhone, { phoneNumber: args.phoneNumber });
-        if (res.deleted) {
-          return {
-            success: true,
-            response: `↩️ Undone: ${res.type} of ${res.amount} (${res.description})`,
-          };
+        try {
+          const res = await ctx.runMutation(internalAny.whatsapp.deleteLastByPhone, { phoneNumber: args.phoneNumber });
+          if (res.deleted) {
+            return {
+              success: true,
+              response: `↩️ Undone: ${res.type} of ${res.amount} (${res.description})`,
+            };
+          }
+          return { success: false, response: "Nothing to undo." };
+        } catch (err) {
+          console.error("undo command failed", err);
+          return { success: false, response: "⚠️ Couldn't undo. Please try again." };
         }
-        return { success: false, response: "Nothing to undo." };
       }
 
       if (lower.startsWith("balance")) {
-        const s = await ctx.runMutation(internalAny.whatsapp.getSummaryByPhone, { phoneNumber: args.phoneNumber });
-        return {
-          success: true,
-          response: `📊 Balance\nIncome: ${s.totalIncome}\nExpenses: ${s.totalExpenses}\nTax: ${s.totalTax}\nNet: ${s.net}`,
-        };
+        try {
+          const s = await ctx.runMutation(internalAny.whatsapp.getSummaryByPhone, { phoneNumber: args.phoneNumber });
+          return {
+            success: true,
+            response: `📊 Balance\nIncome: ${s.totalIncome}\nExpenses: ${s.totalExpenses}\nTax: ${s.totalTax}\nNet: ${s.net}`,
+          };
+        } catch (err) {
+          console.error("balance command failed", err);
+          return { success: false, response: "⚠️ Couldn't fetch balance. Try later." };
+        }
       }
 
-      // Normal transaction parsing
       const parsedTransaction = await parseTransactionMessage(args.message);
 
       if (parsedTransaction) {
-        await ctx.runMutation(internalAny.whatsapp.createFromWhatsApp, {
-          ...parsedTransaction,
-          whatsappMessageId: args.messageId,
-          phoneNumber: args.phoneNumber,
-        });
+        try {
+          await ctx.runMutation(internalAny.whatsapp.createFromWhatsApp, {
+            ...parsedTransaction,
+            whatsappMessageId: args.messageId,
+            phoneNumber: args.phoneNumber,
+          });
 
-        return {
-          success: true,
-          response: `✅ Recorded: ${parsedTransaction.type} of ${parsedTransaction.amount} (${parsedTransaction.category})`,
-        };
+          return {
+            success: true,
+            response: `✅ Recorded: ${parsedTransaction.type} of ${parsedTransaction.amount} (${parsedTransaction.category})`,
+          };
+        } catch (err) {
+          console.error("createFromWhatsApp failed", err);
+          return { success: false, response: "⚠️ Failed to record the transaction. Please try again." };
+        }
       }
 
       return {
@@ -62,11 +71,8 @@ export const processMessage = action({
           "I couldn't understand that. Try:\n- Sold 5 items for ₹500\n- Bought supplies ₹200\nCommands: undo, balance",
       };
     } catch (err) {
-      console.error("processMessage error:", err);
-      return {
-        success: false,
-        response: "⚠️ Something went wrong while processing your message. Please try again.",
-      };
+      console.error("processMessage unexpected error", err);
+      return { success: false, response: "⚠️ Unexpected error. Please try again." };
     }
   },
 });
@@ -170,16 +176,21 @@ export const getSummaryByPhone = internalMutation({
 export const deleteLastByPhone = internalMutation({
   args: { phoneNumber: v.string() },
   handler: async (ctx, args) => {
-    let last: any = null;
-    const query = ctx.db.query("transactions").withIndex("by_phone", (q) => q.eq("phoneNumber", args.phoneNumber));
-    for await (const row of query) {
-      if (!last || row._creationTime > last._creationTime) last = row;
+    try {
+      let last: any = null;
+      const query = ctx.db.query("transactions").withIndex("by_phone", (q) => q.eq("phoneNumber", args.phoneNumber));
+      for await (const row of query) {
+        if (!last || row._creationTime > last._creationTime) last = row;
+      }
+      if (last) {
+        await ctx.db.delete(last._id);
+        return { deleted: true, description: last.description, amount: last.amount, type: last.type };
+      }
+      return { deleted: false };
+    } catch (err) {
+      console.error("deleteLastByPhone failed", err);
+      return { deleted: false };
     }
-    if (last) {
-      await ctx.db.delete(last._id);
-      return { deleted: true, description: last.description, amount: last.amount, type: last.type };
-    }
-    return { deleted: false };
   },
 });
 

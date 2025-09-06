@@ -15,7 +15,7 @@ import {
   Menu
 } from "lucide-react";
 import { useNavigate } from "react-router";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { useState } from "react";
 
 export default function Landing() {
@@ -142,54 +142,64 @@ export default function Landing() {
                     </SheetTitle>
                   </SheetHeader>
                   <div className="mt-6 flex flex-col gap-3">
-                    <a href="#hero" className="text-base text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400">
-                      Hero
-                    </a>
-                    <a href="#features" className="text-base text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400">
-                      Features
-                    </a>
-                    <a href="#benefits" className="text-base text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400">
-                      Benefits
-                    </a>
+                    <SheetClose asChild>
+                      <a href="#hero" className="text-base text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400">
+                        Hero
+                      </a>
+                    </SheetClose>
+                    <SheetClose asChild>
+                      <a href="#features" className="text-base text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400">
+                        Features
+                      </a>
+                    </SheetClose>
+                    <SheetClose asChild>
+                      <a href="#benefits" className="text-base text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400">
+                        Benefits
+                      </a>
+                    </SheetClose>
                     <div className="pt-4">
                       {isLoading ? (
                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
                       ) : isAuthenticated ? (
-                        <Button
-                          onClick={async () => {
-                            setCtaLoading(true);
-                            try { navigate(isAuthenticated ? "/dashboard" : "/auth"); } finally { setCtaLoading(false); }
-                          }}
-                          disabled={ctaLoading}
-                          className="w-full bg-gradient-to-r from-blue-600 to-purple-600"
-                        >
-                          {ctaLoading ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              {isAuthenticated ? "Opening Dashboard…" : "Starting…"}
-                            </>
-                          ) : (
-                            isAuthenticated ? "Dashboard" : "Get Started"
-                          )}
-                        </Button>
+                        <SheetClose asChild>
+                          <Button
+                            onClick={async () => {
+                              setCtaLoading(true);
+                              try { navigate(isAuthenticated ? "/dashboard" : "/auth"); } finally { setCtaLoading(false); }
+                            }}
+                            disabled={ctaLoading}
+                            className="w-full bg-gradient-to-r from-blue-600 to-purple-600"
+                          >
+                            {ctaLoading ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                {isAuthenticated ? "Opening Dashboard…" : "Starting…"}
+                              </>
+                            ) : (
+                              isAuthenticated ? "Dashboard" : "Get Started"
+                            )}
+                          </Button>
+                        </SheetClose>
                       ) : (
-                        <Button
-                          onClick={async () => {
-                            setCtaLoading(true);
-                            try { navigate("/auth"); } finally { setCtaLoading(false); }
-                          }}
-                          disabled={ctaLoading}
-                          className="w-full bg-gradient-to-r from-blue-600 to-purple-600"
-                        >
-                          {ctaLoading ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              {isAuthenticated ? "Opening Dashboard…" : "Starting…"}
-                            </>
-                          ) : (
-                            isAuthenticated ? "Dashboard" : "Get Started"
-                          )}
-                        </Button>
+                        <SheetClose asChild>
+                          <Button
+                            onClick={async () => {
+                              setCtaLoading(true);
+                              try { navigate("/auth"); } finally { setCtaLoading(false); }
+                            }}
+                            disabled={ctaLoading}
+                            className="w-full bg-gradient-to-r from-blue-600 to-purple-600"
+                          >
+                            {ctaLoading ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                {isAuthenticated ? "Opening Dashboard…" : "Starting…"}
+                              </>
+                            ) : (
+                              isAuthenticated ? "Dashboard" : "Get Started"
+                            )}
+                          </Button>
+                        </SheetClose>
                       )}
                     </div>
                   </div>

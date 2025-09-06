@@ -12,7 +12,6 @@ async function sendWhatsAppText(to: string, body: string) {
   const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
 
   if (!token || !phoneNumberId) {
-    // Silently skip sending if not configured, but don't explode the webhook
     console.warn("WhatsApp send skipped: missing WHATSAPP_TOKEN or WHATSAPP_PHONE_NUMBER_ID");
     return;
   }
@@ -35,10 +34,10 @@ async function sendWhatsAppText(to: string, body: string) {
 
     if (!res.ok) {
       const text = await res.text().catch(() => "");
-      console.error("WhatsApp send error:", res.status, text.slice(0, 500));
+      console.error("WhatsApp send failed", { status: res.status, statusText: res.statusText, body: text });
     }
   } catch (err) {
-    console.error("WhatsApp send network error:", err);
+    console.error("WhatsApp send error", err);
   }
 }
 
@@ -72,58 +71,64 @@ http.route({
   handler: httpAction(async (ctx, req) => {
     try {
       const body = await req.json().catch(() => null);
-      if (!body || typeof body !== "object") {
-        console.warn("Invalid webhook payload");
+      if (!body || !Array.isArray(body?.entry)) {
+        console.warn("Webhook received invalid body");
         return new Response("EVENT_RECEIVED", { status: 200 });
       }
 
-      // Structure per WhatsApp Cloud API
-      // body.entry[].changes[].value.messages[]
-      const entry = Array.isArray((body as any)?.entry) ? (body as any).entry[0] : null;
+      const entry = body.entry[0];
       const changes = Array.isArray(entry?.changes) ? entry.changes[0] : null;
       const value = changes?.value ?? null;
+
+      // Handle status updates gracefully (delivery/read receipts)
+      if (Array.isArray(value?.statuses) && value.statuses.length > 0) {
+        return new Response("EVENT_RECEIVED", { status: 200 });
+      }
+
       const messages = Array.isArray(value?.messages) ? value.messages : [];
 
-      // If no messages, just ack
       if (!messages.length) {
         return new Response("EVENT_RECEIVED", { status: 200 });
       }
 
       for (const msg of messages) {
         try {
-          // Only handle text messages for now
           if (msg?.type !== "text") continue;
 
           const messageId: string = msg.id ?? "";
           const messageText: string = msg.text?.body ?? "";
-          // "from" contains the sender phone number in international format
           const phoneNumber: string = msg.from ?? "";
 
           if (!messageId || !messageText || !phoneNumber) {
-            console.warn("Skipping message: missing fields", { messageId, hasText: !!messageText, phoneNumber });
+            console.warn("Skipping malformed message", { messageId, hasText: !!messageText, phoneNumber });
             continue;
           }
 
-          // Process via existing action
           const result = await ctx.runAction(api.whatsapp.processMessage, {
             phoneNumber,
             message: messageText,
             messageId,
           });
 
-          // Reply back to user
           const reply = result?.response || "✅ Received.";
           await sendWhatsAppText(phoneNumber, reply);
-        } catch (innerErr) {
-          console.error("Error handling individual message:", innerErr);
-          // Continue processing any remaining messages
+        } catch (perMessageErr) {
+          console.error("Error processing individual message", perMessageErr);
+          // Try to notify the user once with a generic error, but don't throw
+          try {
+            const phoneNumber: string = msg?.from ?? "";
+            if (phoneNumber) {
+              await sendWhatsAppText(phoneNumber, "⚠️ Sorry, something went wrong. Please try again.");
+            }
+          } catch {
+            // swallow
+          }
         }
       }
 
       return new Response("EVENT_RECEIVED", { status: 200 });
     } catch (err) {
       console.error("WhatsApp webhook error:", err);
-      // Always return 200 to avoid webhook disablement, but log errors
       return new Response("EVENT_RECEIVED", { status: 200 });
     }
   }),
