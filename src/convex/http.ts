@@ -1,4 +1,4 @@
-"use node";
+/* removed "use node" directive */
 
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
