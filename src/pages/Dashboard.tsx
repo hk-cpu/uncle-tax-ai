@@ -17,12 +17,15 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function Dashboard() {
   const { user, isLoading } = useAuth();
   const [selectedCountry, setSelectedCountry] = useState<"IN" | "SA">("IN");
   const [exporting, setExporting] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [showConnect, setShowConnect] = useState(false);
+  const [verifyToken, setVerifyToken] = useState("change-me-secure-token");
   
   const transactions = useQuery(api.transactions.list, { 
     limit: 10, 
@@ -89,6 +92,18 @@ export default function Dashboard() {
       setExporting(false);
     }
   };
+
+  // Helper: copy to clipboard with feedback
+  const copy = async (text: string, label?: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success(`${label ?? "Copied"} to clipboard`);
+    } catch {
+      toast.error("Failed to copy");
+    }
+  };
+
+  const webhookUrl = `${(import.meta as any).env.VITE_CONVEX_URL?.replace(/\/$/, "") ?? "https://YOUR-CONVEX-URL"}/webhooks/whatsapp`;
 
   if (isLoading) {
     return (
@@ -415,13 +430,101 @@ export default function Dashboard() {
                     </p>
                   </div>
                 </div>
-                <Button variant="secondary" className="bg-white text-green-600 hover:bg-gray-100">
+                <Button
+                  variant="secondary"
+                  className="bg-white text-green-600 hover:bg-gray-100"
+                  onClick={() => setShowConnect(true)}
+                >
                   Connect WhatsApp
                 </Button>
               </div>
             </CardContent>
           </Card>
         </motion.div>
+
+        {/* Connect WhatsApp Dialog */}
+        <Dialog open={showConnect} onOpenChange={setShowConnect}>
+          <DialogContent showCloseButton>
+            <DialogHeader>
+              <DialogTitle>Connect WhatsApp</DialogTitle>
+              <DialogDescription>
+                Enable WhatsApp Cloud API to receive and reply to messages automatically.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm font-medium text-gray-900">1) Add your webhook to Meta</p>
+                <ol className="mt-2 list-decimal list-inside text-sm text-gray-700 space-y-1">
+                  <li>Go to Meta Business → WhatsApp → API Setup</li>
+                  <li>Set Callback URL and Verify Token (below), then Subscribe to messages + message status</li>
+                </ol>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-900">Callback URL</label>
+                <div className="flex gap-2">
+                  <Input readOnly value={webhookUrl} />
+                  <Button
+                    variant="outline"
+                    onClick={() => copy(webhookUrl, "Callback URL")}
+                  >
+                    Copy
+                  </Button>
+                </div>
+                <p className="text-xs text-gray-500">
+                  This endpoint is already live in your backend.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-900">Verify Token</label>
+                <div className="flex gap-2">
+                  <Input
+                    value={verifyToken}
+                    onChange={(e) => setVerifyToken(e.target.value)}
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={() => copy(verifyToken, "Verify token")}
+                  >
+                    Copy
+                  </Button>
+                </div>
+                <p className="text-xs text-gray-500">
+                  Use the same value in both Meta and your Convex env variable WHATSAPP_VERIFY_TOKEN.
+                </p>
+              </div>
+
+              <div>
+                <p className="text-sm font-medium text-gray-900">2) Set environment variables</p>
+                <ul className="mt-2 text-sm text-gray-700 space-y-1">
+                  <li>WHATSAPP_VERIFY_TOKEN = your verify token above</li>
+                  <li>WHATSAPP_TOKEN = your permanent access token</li>
+                  <li>WHATSAPP_PHONE_NUMBER_ID = your WhatsApp phone number ID</li>
+                </ul>
+                <p className="text-xs text-gray-500 mt-2">
+                  Set these in Convex → Environment Variables. After saving, send a test message from Meta.
+                </p>
+              </div>
+
+              <div>
+                <p className="text-sm font-medium text-gray-900">3) Test</p>
+                <ul className="mt-2 text-sm text-gray-700 space-y-1">
+                  <li>Send "Sold 3 items for ₹1,250" to your number</li>
+                  <li>Try "balance" and "undo" commands</li>
+                </ul>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowConnect(false)}>
+                Close
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
       </div>
     </motion.div>
   );
