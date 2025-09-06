@@ -21,7 +21,8 @@ import { useState } from "react";
 export default function Landing() {
   const { isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
-  const [ctaLoading, setCtaLoading] = useState(false);
+  const [loadingBtn, setLoadingBtn] = useState<string | null>(null);
+  const [billing, setBilling] = useState<"monthly" | "yearly">("monthly");
 
   const features = [
     {
@@ -64,6 +65,36 @@ export default function Landing() {
     "Works in Hindi, Arabic, and English"
   ];
 
+  const plans = [
+    {
+      name: "Starter",
+      monthly: 0,
+      yearly: 0,
+      description: "For trying UNCLE",
+      features: ["Up to 50 transactions/mo", "Basic reports", "Email support"],
+      cta: "Get Started",
+      recommended: false,
+    },
+    {
+      name: "Pro",
+      monthly: 9,
+      yearly: 90,
+      description: "For growing shops",
+      features: ["Unlimited transactions", "Advanced reports", "Priority support"],
+      recommended: true,
+      cta: "Start Free Trial",
+    },
+    {
+      name: "Business",
+      monthly: 29,
+      yearly: 290,
+      description: "For multi-store owners",
+      features: ["All Pro features", "Team access", "Dedicated support"],
+      cta: "Contact Sales",
+      recommended: false,
+    },
+  ] as const;
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -95,29 +126,32 @@ export default function Landing() {
               <a href="#benefits" className="text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">
                 Benefits
               </a>
+              <a href="#pricing" className="text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">
+                Pricing
+              </a>
               {isLoading ? (
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
               ) : isAuthenticated ? (
                 <Button
                   onClick={async () => {
-                    setCtaLoading(true);
-                    try { navigate("/dashboard"); } finally { setCtaLoading(false); }
+                    setLoadingBtn("header");
+                    try { navigate("/dashboard"); } finally { setLoadingBtn(null); }
                   }}
-                  disabled={ctaLoading}
+                  disabled={loadingBtn === "header"}
                   className="bg-gradient-to-r from-blue-600 to-purple-600"
                 >
-                  {ctaLoading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Redirecting…</>) : "Dashboard"}
+                  {loadingBtn === "header" ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Redirecting…</>) : "Dashboard"}
                 </Button>
               ) : (
                 <Button
                   onClick={async () => {
-                    setCtaLoading(true);
-                    try { navigate("/auth"); } finally { setCtaLoading(false); }
+                    setLoadingBtn("header");
+                    try { navigate("/auth"); } finally { setLoadingBtn(null); }
                   }}
-                  disabled={ctaLoading}
+                  disabled={loadingBtn === "header"}
                   className="bg-gradient-to-r from-blue-600 to-purple-600"
                 >
-                  {ctaLoading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading…</>) : "Get Started"}
+                  {loadingBtn === "header" ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading…</>) : "Get Started"}
                 </Button>
               )}
             </div>
@@ -130,7 +164,7 @@ export default function Landing() {
                     <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-[85vw] max-w-sm p-4">
+                <SheetContent side="right" className="w-72">
                   <SheetHeader>
                     <SheetTitle className="flex items-center gap-2">
                       <img
@@ -157,6 +191,11 @@ export default function Landing() {
                         Benefits
                       </a>
                     </SheetClose>
+                    <SheetClose asChild>
+                      <a href="#pricing" className="text-base text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400">
+                        Pricing
+                      </a>
+                    </SheetClose>
                     <div className="pt-4">
                       {isLoading ? (
                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
@@ -164,19 +203,19 @@ export default function Landing() {
                         <SheetClose asChild>
                           <Button
                             onClick={async () => {
-                              setCtaLoading(true);
-                              try { navigate(isAuthenticated ? "/dashboard" : "/auth"); } finally { setCtaLoading(false); }
+                              setLoadingBtn("mobile_header");
+                              try { navigate("/dashboard"); } finally { setLoadingBtn(null); }
                             }}
-                            disabled={ctaLoading}
+                            disabled={loadingBtn === "mobile_header"}
                             className="w-full bg-gradient-to-r from-blue-600 to-purple-600"
                           >
-                            {ctaLoading ? (
+                            {loadingBtn === "mobile_header" ? (
                               <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                {isAuthenticated ? "Opening Dashboard…" : "Starting…"}
+                                Opening Dashboard…
                               </>
                             ) : (
-                              isAuthenticated ? "Dashboard" : "Get Started"
+                              "Dashboard"
                             )}
                           </Button>
                         </SheetClose>
@@ -184,19 +223,19 @@ export default function Landing() {
                         <SheetClose asChild>
                           <Button
                             onClick={async () => {
-                              setCtaLoading(true);
-                              try { navigate("/auth"); } finally { setCtaLoading(false); }
+                              setLoadingBtn("mobile_header");
+                              try { navigate("/auth"); } finally { setLoadingBtn(null); }
                             }}
-                            disabled={ctaLoading}
+                            disabled={loadingBtn === "mobile_header"}
                             className="w-full bg-gradient-to-r from-blue-600 to-purple-600"
                           >
-                            {ctaLoading ? (
+                            {loadingBtn === "mobile_header" ? (
                               <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                {isAuthenticated ? "Opening Dashboard…" : "Starting…"}
+                                Starting…
                               </>
                             ) : (
-                              isAuthenticated ? "Dashboard" : "Get Started"
+                              "Get Started"
                             )}
                           </Button>
                         </SheetClose>
@@ -211,7 +250,7 @@ export default function Landing() {
       </header>
 
       {/* Hero Section */}
-      <section id="hero" className="relative overflow-hidden py-16 sm:py-20">
+      <section id="hero" className="relative overflow-hidden py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <motion.div
@@ -224,10 +263,10 @@ export default function Landing() {
               <p className="text-sm md:text-base text-blue-600/80 dark:text-blue-300/80 tracking-wide uppercase mb-2">
                 UNCLE — Unified Numbers, Compliance & Ledger Engine
               </p>
-              <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-6">
+              <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-6">
                 Your AI Tax Assistant
               </h1>
-              <p className="text-lg md:text-2xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
+              <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
                 UNCLE makes tax management effortless for shopkeepers. Send transactions via WhatsApp, 
                 get instant tax calculations, and generate professional reports.
               </p>
@@ -237,18 +276,18 @@ export default function Landing() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center mb-12"
+              className="flex flex-col sm:flex-row gap-4 justify-center mb-12"
             >
               <Button 
                 size="lg" 
                 onClick={async () => {
-                  setCtaLoading(true);
-                  try { navigate(isAuthenticated ? "/dashboard" : "/auth"); } finally { setCtaLoading(false); }
+                  setLoadingBtn("hero_primary");
+                  try { navigate(isAuthenticated ? "/dashboard" : "/auth"); } finally { setLoadingBtn(null); }
                 }}
-                disabled={ctaLoading}
-                className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-lg px-8 py-6"
+                disabled={loadingBtn === "hero_primary"}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-lg px-8 py-6"
               >
-                {ctaLoading ? (
+                {loadingBtn === "hero_primary" ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                     {isAuthenticated ? "Opening Dashboard…" : "Starting…"}
@@ -263,9 +302,26 @@ export default function Landing() {
               <Button 
                 size="lg" 
                 variant="outline"
-                className="w-full sm:w-auto text-lg px-8 py-6 border-2"
+                className="text-lg px-8 py-6 border-2"
+                onClick={async () => {
+                  setLoadingBtn("hero_demo");
+                  try {
+                    await new Promise((r) => setTimeout(r, 600));
+                    window.open("https://www.youtube.com/results?search_query=uncle+ai+tax+assistant+demo", "_blank");
+                  } finally {
+                    setLoadingBtn(null);
+                  }
+                }}
+                disabled={loadingBtn === "hero_demo"}
               >
-                Watch Demo
+                {loadingBtn === "hero_demo" ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Loading Demo…
+                  </>
+                ) : (
+                  "Watch Demo"
+                )}
               </Button>
             </motion.div>
 
@@ -275,8 +331,8 @@ export default function Landing() {
               transition={{ delay: 0.6 }}
               className="relative"
             >
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 sm:p-8 max-w-4xl mx-auto">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-4xl mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="text-center">
                     <div className="bg-green-100 dark:bg-green-900 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
                       <MessageSquare className="h-8 w-8 text-green-600" />
@@ -323,7 +379,7 @@ export default function Landing() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
               <motion.div
                 key={index}
@@ -353,7 +409,7 @@ export default function Landing() {
       {/* Benefits Section */}
       <section id="benefits" className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <motion.div
               initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
@@ -403,8 +459,101 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Pricing Section */}
+      <section id="pricing" className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10">
+            <h2 className="text-4xl font-bold text-gray-900 mb-3">Simple, transparent pricing</h2>
+            <p className="text-gray-600">Choose a plan that fits your business</p>
+          </div>
+
+          {/* Billing Toggle */}
+          <div className="flex justify-center mb-10">
+            <div className="inline-flex items-center rounded-full border bg-gray-50 p-1">
+              <button
+                className={`px-4 py-2 text-sm rounded-full ${billing === "monthly" ? "bg-white border shadow-sm" : "text-gray-600"}`}
+                onClick={() => setBilling("monthly")}
+              >
+                Monthly
+              </button>
+              <button
+                className={`px-4 py-2 text-sm rounded-full ${billing === "yearly" ? "bg-white border shadow-sm" : "text-gray-600"}`}
+                onClick={() => setBilling("yearly")}
+                title="Save with annual billing"
+              >
+                Yearly <span className="ml-1 text-xs text-green-600">(save 20%)</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Plans */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {plans.map((plan, idx) => (
+              <motion.div
+                key={plan.name}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.1 * idx }}
+              >
+                <Card className={`h-full ${plan.recommended ? "border-blue-600" : ""}`}>
+                  <CardHeader className="relative">
+                    {plan.recommended && (
+                      <span className="absolute -top-3 right-6 text-xs bg-blue-600 text-white px-2 py-1 rounded-full">
+                        Most Popular
+                      </span>
+                    )}
+                    <CardTitle className="text-xl">{plan.name}</CardTitle>
+                    <CardDescription>{plan.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="flex items-end gap-1">
+                      <span className="text-4xl font-bold text-gray-900">
+                        {billing === "monthly" ? `$${plan.monthly}` : `$${plan.yearly}`}
+                      </span>
+                      <span className="text-gray-500">
+                        {billing === "monthly" ? "/mo" : "/yr"}
+                      </span>
+                    </div>
+
+                    <ul className="space-y-2 text-sm text-gray-700">
+                      {plan.features.map((f) => (
+                        <li key={f} className="flex items-center gap-2">
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                          <span>{f}</span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <Button
+                      className={`w-full ${plan.recommended ? "bg-blue-600 hover:bg-blue-700" : ""}`}
+                      variant={plan.recommended ? "default" : "outline"}
+                      onClick={async () => {
+                        const key = `pricing_${plan.name}`;
+                        setLoadingBtn(key);
+                        try { navigate(isAuthenticated ? "/dashboard" : "/auth"); } finally { setLoadingBtn(null); }
+                      }}
+                      disabled={loadingBtn === `pricing_${plan.name}`}
+                    >
+                      {loadingBtn === `pricing_${plan.name}` ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          {isAuthenticated ? "Opening Dashboard…" : "Starting…"}
+                        </>
+                      ) : (
+                        plan.cta
+                      )}
+                    </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
-      <footer className="bg-white text-gray-700 border-t py-10 sm:py-12">
+      <footer className="bg-white text-gray-700 border-t py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <div className="flex items-center justify-center space-x-3 mb-4">
