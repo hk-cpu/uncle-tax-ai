@@ -10,106 +10,87 @@ const http = typeof (globalThis as any).__httpRouter !== "undefined"
   : (globalThis as any).__httpRouter = httpRouter();
 
 // Helper to send a WhatsApp message via Meta Graph API
-async function sendWhatsAppText(to: string, body: string): Promise<boolean> {
+async function sendWhatsAppText(to: string, body: string) {
   const token = process.env.WHATSAPP_TOKEN;
   const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
 
   if (!token || !phoneNumberId) {
     console.warn("WhatsApp send skipped: missing WHATSAPP_TOKEN or WHATSAPP_PHONE_NUMBER_ID");
-    return false;
+    return;
   }
 
+  // Ensure recipient and body are safe, non-empty strings
   const safeTo = String(to ?? "").trim();
   const safeBody = String(body ?? "").slice(0, 4000).trim();
 
   if (!safeTo) {
     console.warn("WhatsApp send skipped: empty 'to' phone number");
-    return false;
+    return;
   }
   if (!safeBody) {
     console.warn("WhatsApp send skipped: empty message body");
-    return false;
+    return;
   }
 
   const url = `https://graph.facebook.com/v20.0/${phoneNumberId}/messages`;
   try {
-    const res = await postWithRetry(
-      url,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          messaging_product: "whatsapp",
-          to: safeTo,
-          type: "text",
-          text: { body: safeBody },
-        }),
-        timeoutMs: 8000,
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
       },
-      2,
-    );
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        to: safeTo,
+        type: "text",
+        text: { body: safeBody },
+      }),
+    });
 
     if (!res.ok) {
-      let errBody = "";
-      try {
-        // Try parse JSON first for Graph API error details
-        const asJson = await res.clone().json();
-        errBody = JSON.stringify(asJson);
-      } catch {
-        errBody = await res.text().catch(() => "");
-      }
-      console.error("WhatsApp send failed", {
-        status: res.status,
-        statusText: res.statusText,
-        body: errBody?.slice(0, 2000),
-      });
-      return false;
+      const text = await res.text().catch(() => "");
+      console.error("WhatsApp send failed", { status: res.status, statusText: res.statusText, body: text });
     }
-    return true;
-  } catch (err: any) {
-    console.error("WhatsApp send error", {
-      message: err?.message ?? String(err),
-      name: err?.name,
-      cause: err?.cause ? String(err.cause) : undefined,
-    });
-    return false;
+  } catch (err) {
+    console.error("WhatsApp send error", err);
   }
 }
 
-// Add a generic POST with retry helper and timeout
-async function postWithRetry(
-  url: string,
-  init: RequestInit & { timeoutMs?: number } = {},
-  retries = 2,
-  attempt = 0
-): Promise<Response> {
-  const { timeoutMs = 6000, ...rest } = init;
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(new Error("timeout")), timeoutMs);
+// Add helpers for signature verification and consistent logging
+function toHex(bytes: Uint8Array) {
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
 
+// Constant-time comparison
+function timingSafeEqualHex(a: string, b: string) {
+  if (a.length !== b.length) return false;
+  let out = 0;
+  for (let i = 0; i < a.length; i++) {
+    out |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return out === 0;
+}
+
+async function verifyWhatsAppSignature(appSecret: string, body: ArrayBuffer, headerSig: string | null) {
   try {
-    const res = await fetch(url, { ...rest, signal: controller.signal });
-    // Retry on 429 or 5xx
-    if ((res.status === 429 || (res.status >= 500 && res.status < 600)) && retries > 0) {
-      const retryAfter = Number(res.headers.get("retry-after")) || 0;
-      const backoff = Math.min(2000 * Math.pow(2, attempt), 8000);
-      const delay = Math.max(retryAfter * 1000, backoff);
-      await new Promise((r) => setTimeout(r, delay));
-      return postWithRetry(url, init, retries - 1, attempt + 1);
-    }
-    return res;
-  } catch (err) {
-    if (retries > 0) {
-      const backoff = Math.min(2000 * Math.pow(2, attempt), 8000);
-      await new Promise((r) => setTimeout(r, backoff));
-      return postWithRetry(url, init, retries - 1, attempt + 1);
-    }
-    throw err;
-  } finally {
-    clearTimeout(timeout);
+    if (!headerSig || !headerSig.startsWith("sha256=")) return false;
+    const provided = headerSig.slice("sha256=".length);
+    const key = await crypto.subtle.importKey(
+      "raw",
+      new TextEncoder().encode(appSecret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"]
+    );
+    const mac = await crypto.subtle.sign("HMAC", key, body);
+    const expected = toHex(new Uint8Array(mac));
+    return timingSafeEqualHex(provided, expected);
+  } catch (e) {
+    console.error("whatsapp.signature.verify_error", e);
+    return false;
   }
 }
 
@@ -141,19 +122,36 @@ http.route({
   path: "/webhooks/whatsapp",
   method: "POST",
   handler: httpAction(async (ctx, req) => {
+    // Enhanced: verify X-Hub-Signature-256 if WHATSAPP_APP_SECRET is set
+    const appSecret = process.env.WHATSAPP_APP_SECRET;
+    const sigHeader = req.headers.get("x-hub-signature-256");
+    const bodyBuf = await req.arrayBuffer();
+
+    if (appSecret) {
+      const ok = await verifyWhatsAppSignature(appSecret, bodyBuf, sigHeader);
+      if (!ok) {
+        console.warn("whatsapp.webhook.signature_invalid", {
+          hasHeader: !!sigHeader,
+          bodyLen: bodyBuf.byteLength,
+        });
+        return new Response("Invalid signature", { status: 403 });
+      }
+    } else {
+      console.warn("whatsapp.webhook.signature_skipped_missing_secret");
+    }
+
     try {
-      const contentType = req.headers.get("content-type") ?? "";
-      if (!contentType.toLowerCase().includes("application/json")) {
-        console.warn("Webhook received invalid content-type", { contentType });
+      const bodyText = new TextDecoder().decode(bodyBuf);
+      let body: any = null;
+      try {
+        body = JSON.parse(bodyText);
+      } catch {
+        console.warn("whatsapp.webhook.invalid_json", { bodyLen: bodyText.length });
         return new Response("EVENT_RECEIVED", { status: 200 });
       }
 
-      const body = await req.json().catch((e) => {
-        console.warn("Webhook JSON parse error", { error: String(e) });
-        return null;
-      });
       if (!body || !Array.isArray(body?.entry)) {
-        console.warn("Webhook received invalid body shape");
+        console.warn("whatsapp.webhook.invalid_body_shape");
         return new Response("EVENT_RECEIVED", { status: 200 });
       }
 
@@ -161,27 +159,40 @@ http.route({
       const changes = Array.isArray(entry?.changes) ? entry.changes[0] : null;
       const value = changes?.value ?? null;
 
-      // Handle status updates gracefully (delivery/read receipts)
+      console.log("whatsapp.webhook.received", {
+        entryId: entry?.id,
+        messagingProduct: value?.messaging_product,
+        statuses: Array.isArray(value?.statuses) ? value.statuses.length : 0,
+        messages: Array.isArray(value?.messages) ? value.messages.length : 0,
+      });
+
+      // Handle status updates (delivery/read receipts)
       if (Array.isArray(value?.statuses) && value.statuses.length > 0) {
         return new Response("EVENT_RECEIVED", { status: 200 });
       }
 
       const messages = Array.isArray(value?.messages) ? value.messages : [];
-
       if (!messages.length) {
         return new Response("EVENT_RECEIVED", { status: 200 });
       }
 
       for (const msg of messages) {
         try {
-          if (msg?.type !== "text") continue;
+          if (msg?.type !== "text") {
+            console.log("whatsapp.webhook.skip_non_text", { messageId: msg?.id, type: msg?.type });
+            continue;
+          }
 
           const messageId: string = msg.id ?? "";
           const messageText: string = msg.text?.body ?? "";
           const phoneNumber: string = msg.from ?? "";
 
           if (!messageId || !messageText || !phoneNumber) {
-            console.warn("Skipping malformed message", { messageId, hasText: !!messageText, phoneNumber });
+            console.warn("whatsapp.webhook.malformed_message", {
+              hasId: !!messageId,
+              hasText: !!messageText,
+              hasFrom: !!phoneNumber,
+            });
             continue;
           }
 
@@ -190,15 +201,22 @@ http.route({
             const rl = await ctx.runMutation(internal.whatsapp.checkRateLimit, { phoneNumber });
             if (rl?.blocked) {
               const waitSec = Math.ceil((rl.retryAfterMs ?? 0) / 1000);
+              console.warn("whatsapp.rate_limited", { phoneNumber, waitSec });
               await sendWhatsAppText(
                 phoneNumber,
                 `⏱️ Please slow down. Try again in ${waitSec}s.`
               );
-              continue; // Skip processing this message
+              continue;
             }
           } catch (rateErr) {
-            console.error("Rate limit check failed; proceeding without block", rateErr);
+            console.error("whatsapp.rate_limit_check_error", rateErr);
           }
+
+          console.log("whatsapp.process.start", {
+            phoneNumber,
+            messageId,
+            preview: messageText.slice(0, 80),
+          });
 
           const result = await ctx.runAction(api.whatsapp.processMessage, {
             phoneNumber,
@@ -208,10 +226,21 @@ http.route({
 
           const replyRaw = typeof result?.response === "string" ? result.response : "✅ Received.";
           const reply = replyRaw.slice(0, 4000);
+
           await sendWhatsAppText(phoneNumber, reply);
+
+          console.log("whatsapp.process.success", {
+            phoneNumber,
+            messageId,
+            success: !!result?.success,
+          });
         } catch (perMessageErr) {
-          console.error("Error processing individual message", perMessageErr);
-          // Try to notify the user once with a generic error, but don't throw
+          console.error("whatsapp.process.error", {
+            error: (perMessageErr as Error)?.message ?? String(perMessageErr),
+            stack: (perMessageErr as Error)?.stack,
+            messageId: msg?.id,
+            from: msg?.from,
+          });
           try {
             const phoneNumber: string = msg?.from ?? "";
             if (phoneNumber) {
@@ -225,11 +254,10 @@ http.route({
 
       return new Response("EVENT_RECEIVED", { status: 200 });
     } catch (err) {
-      console.error("WhatsApp webhook error:", {
-        message: (err as any)?.message ?? String(err),
-        name: (err as any)?.name,
+      console.error("whatsapp.webhook.handler_error", {
+        error: (err as Error)?.message ?? String(err),
+        stack: (err as Error)?.stack,
       });
-      // Always 200 to avoid provider retries; errors are fully logged.
       return new Response("EVENT_RECEIVED", { status: 200 });
     }
   }),
