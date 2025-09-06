@@ -39,6 +39,50 @@ export default function Dashboard() {
     category: "",
   });
 
+  // Add CSV export helper
+  const exportCsv = () => {
+    const rows = (transactions ?? []).map((t) => ({
+      Date: new Date(t._creationTime).toISOString(),
+      Type: t.type,
+      Amount: t.amount,
+      Currency: selectedCountry === "IN" ? "INR" : "SAR",
+      TaxRate: t.taxRate ?? 0,
+      TaxAmount: t.taxAmount ?? 0,
+      NetAmount: t.netAmount,
+      Category: t.category,
+      Description: t.description,
+      Country: t.country,
+    }));
+    if (!rows.length) {
+      toast.info("No transactions to export.");
+      return;
+    }
+    const headers = Object.keys(rows[0] as Record<string, unknown>);
+    const csv = [
+      headers.join(","),
+      ...rows.map((r) =>
+        headers
+          .map((h) => {
+            const v = (r as Record<string, unknown>)[h];
+            const s = typeof v === "string" ? v : String(v ?? "");
+            // Escape quotes and wrap in quotes to be safe
+            return `"${s.replace(/"/g, '""')}"`;
+          })
+          .join(","),
+      ),
+    ].join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    const ts = new Date().toISOString().slice(0, 10);
+    a.download = `uncle-transactions-${selectedCountry}-${ts}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("CSV exported.");
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -109,6 +153,9 @@ export default function Dashboard() {
                 <option value="IN">🇮🇳 India</option>
                 <option value="SA">🇸🇦 Saudi Arabia</option>
               </select>
+              <Button variant="outline" onClick={exportCsv}>
+                Export CSV
+              </Button>
             </div>
           </div>
         </div>
