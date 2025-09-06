@@ -15,12 +15,13 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { Menu } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
 
 export default function Landing() {
   const { isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [ctaLoading, setCtaLoading] = useState(false);
 
   const features = [
     {
@@ -97,93 +98,103 @@ export default function Landing() {
               {isLoading ? (
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
               ) : isAuthenticated ? (
-                <Button onClick={() => navigate("/dashboard")} className="bg-gradient-to-r from-blue-600 to-purple-600">
-                  Dashboard
+                <Button
+                  onClick={async () => {
+                    setCtaLoading(true);
+                    try { navigate("/dashboard"); } finally { setCtaLoading(false); }
+                  }}
+                  disabled={ctaLoading}
+                  className="bg-gradient-to-r from-blue-600 to-purple-600"
+                >
+                  {ctaLoading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Redirecting…</>) : "Dashboard"}
                 </Button>
               ) : (
-                <Button onClick={() => navigate("/auth")} className="bg-gradient-to-r from-blue-600 to-purple-600">
-                  Get Started
+                <Button
+                  onClick={async () => {
+                    setCtaLoading(true);
+                    try { navigate("/auth"); } finally { setCtaLoading(false); }
+                  }}
+                  disabled={ctaLoading}
+                  className="bg-gradient-to-r from-blue-600 to-purple-600"
+                >
+                  {ctaLoading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading…</>) : "Get Started"}
                 </Button>
               )}
             </div>
 
             {/* Mobile Menu */}
-            <div className="md:hidden relative">
-              <Button
-                variant="outline"
-                size="icon"
-                aria-label="Open menu"
-                onClick={() => setMobileOpen((v) => !v)}
-              >
-                <Menu className="h-5 w-5" />
-              </Button>
-
-              {mobileOpen && (
-                <div
-                  className="absolute right-0 mt-3 w-72 rounded-lg border bg-white dark:bg-gray-900 shadow-lg p-4 z-50"
-                  role="menu"
-                >
-                  <div className="flex items-center gap-2">
-                    <img
-                      src="https://harmless-tapir-303.convex.cloud/api/storage/bcbdad4d-5195-48b1-9334-b7c21a475144"
-                      alt="UNCLE logo"
-                      className="h-8 w-auto rounded-md"
-                    />
-                    <span className="font-semibold">UNCLE</span>
-                  </div>
-                  <div className="mt-4 flex flex-col gap-3">
-                    <a
-                      href="#hero"
-                      className="text-base text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400"
-                      onClick={() => setMobileOpen(false)}
-                    >
+            <div className="md:hidden">
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="icon" aria-label="Open menu">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-72">
+                  <SheetHeader>
+                    <SheetTitle className="flex items-center gap-2">
+                      <img
+                        src="https://harmless-tapir-303.convex.cloud/api/storage/bcbdad4d-5195-48b1-9334-b7c21a475144"
+                        alt="UNCLE logo"
+                        className="h-8 w-auto rounded-md"
+                      />
+                      UNCLE
+                    </SheetTitle>
+                  </SheetHeader>
+                  <div className="mt-6 flex flex-col gap-3">
+                    <a href="#hero" className="text-base text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400">
                       Hero
                     </a>
-                    <a
-                      href="#features"
-                      className="text-base text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400"
-                      onClick={() => setMobileOpen(false)}
-                    >
+                    <a href="#features" className="text-base text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400">
                       Features
                     </a>
-                    <a
-                      href="#benefits"
-                      className="text-base text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400"
-                      onClick={() => setMobileOpen(false)}
-                    >
+                    <a href="#benefits" className="text-base text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400">
                       Benefits
                     </a>
                     <div className="pt-4">
                       {isLoading ? (
-                        <Button disabled className="w-full bg-gradient-to-r from-blue-600 to-purple-600">
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Loading...
-                        </Button>
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
                       ) : isAuthenticated ? (
                         <Button
-                          onClick={() => {
-                            setMobileOpen(false);
-                            navigate("/dashboard");
+                          onClick={async () => {
+                            setCtaLoading(true);
+                            try { navigate(isAuthenticated ? "/dashboard" : "/auth"); } finally { setCtaLoading(false); }
                           }}
+                          disabled={ctaLoading}
                           className="w-full bg-gradient-to-r from-blue-600 to-purple-600"
                         >
-                          Dashboard
+                          {ctaLoading ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              {isAuthenticated ? "Opening Dashboard…" : "Starting…"}
+                            </>
+                          ) : (
+                            isAuthenticated ? "Dashboard" : "Get Started"
+                          )}
                         </Button>
                       ) : (
                         <Button
-                          onClick={() => {
-                            setMobileOpen(false);
-                            navigate("/auth");
+                          onClick={async () => {
+                            setCtaLoading(true);
+                            try { navigate("/auth"); } finally { setCtaLoading(false); }
                           }}
+                          disabled={ctaLoading}
                           className="w-full bg-gradient-to-r from-blue-600 to-purple-600"
                         >
-                          Get Started
+                          {ctaLoading ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              {isAuthenticated ? "Opening Dashboard…" : "Starting…"}
+                            </>
+                          ) : (
+                            isAuthenticated ? "Dashboard" : "Get Started"
+                          )}
                         </Button>
                       )}
                     </div>
                   </div>
-                </div>
-              )}
+                </SheetContent>
+              </Sheet>
             </div>
           </div>
         </div>
@@ -220,14 +231,17 @@ export default function Landing() {
             >
               <Button 
                 size="lg" 
-                onClick={() => navigate(isAuthenticated ? "/dashboard" : "/auth")}
+                onClick={async () => {
+                  setCtaLoading(true);
+                  try { navigate(isAuthenticated ? "/dashboard" : "/auth"); } finally { setCtaLoading(false); }
+                }}
+                disabled={ctaLoading}
                 className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-lg px-8 py-6"
-                disabled={isLoading}
               >
-                {isLoading ? (
+                {ctaLoading ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Loading...
+                    {isAuthenticated ? "Opening Dashboard…" : "Starting…"}
                   </>
                 ) : (
                   <>

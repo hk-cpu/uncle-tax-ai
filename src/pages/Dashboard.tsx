@@ -12,7 +12,8 @@ import {
   TrendingUp, 
   TrendingDown,
   Receipt,
-  BarChart3
+  BarChart3,
+  Loader2
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -20,6 +21,8 @@ import { toast } from "sonner";
 export default function Dashboard() {
   const { user, isLoading } = useAuth();
   const [selectedCountry, setSelectedCountry] = useState<"IN" | "SA">("IN");
+  const [exporting, setExporting] = useState(false);
+  const [adding, setAdding] = useState(false);
   
   const transactions = useQuery(api.transactions.list, { 
     limit: 10, 
@@ -40,47 +43,51 @@ export default function Dashboard() {
   });
 
   // Add CSV export helper
-  const exportCsv = () => {
-    const rows = (transactions ?? []).map((t) => ({
-      Date: new Date(t._creationTime).toISOString(),
-      Type: t.type,
-      Amount: t.amount,
-      Currency: selectedCountry === "IN" ? "INR" : "SAR",
-      TaxRate: t.taxRate ?? 0,
-      TaxAmount: t.taxAmount ?? 0,
-      NetAmount: t.netAmount,
-      Category: t.category,
-      Description: t.description,
-      Country: t.country,
-    }));
-    if (!rows.length) {
-      toast.info("No transactions to export.");
-      return;
-    }
-    const headers = Object.keys(rows[0] as Record<string, unknown>);
-    const csv = [
-      headers.join(","),
-      ...rows.map((r) =>
-        headers
-          .map((h) => {
-            const v = (r as Record<string, unknown>)[h];
-            const s = typeof v === "string" ? v : String(v ?? "");
-            // Escape quotes and wrap in quotes to be safe
-            return `"${s.replace(/"/g, '""')}"`;
-          })
-          .join(","),
-      ),
-    ].join("\n");
+  const exportCsv = async () => {
+    try {
+      setExporting(true);
+      const rows = (transactions ?? []).map((t) => ({
+        Date: new Date(t._creationTime).toISOString(),
+        Type: t.type,
+        Amount: t.amount,
+        Currency: selectedCountry === "IN" ? "INR" : "SAR",
+        TaxRate: t.taxRate ?? 0,
+        TaxAmount: t.taxAmount ?? 0,
+        NetAmount: t.netAmount,
+        Category: t.category,
+        Description: t.description,
+        Country: t.country,
+      }));
+      if (!rows.length) {
+        toast.info("No transactions to export.");
+        return;
+      }
+      const headers = Object.keys(rows[0] as Record<string, unknown>);
+      const csv = [
+        headers.join(","),
+        ...rows.map((r) =>
+          headers
+            .map((h) => {
+              const v = (r as Record<string, unknown>)[h];
+              const s = typeof v === "string" ? v : String(v ?? "");
+              return `"${s.replace(/"/g, '""')}"`;
+            })
+            .join(","),
+        ),
+      ].join("\n");
 
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    const ts = new Date().toISOString().slice(0, 10);
-    a.download = `uncle-transactions-${selectedCountry}-${ts}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success("CSV exported.");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const ts = new Date().toISOString().slice(0, 10);
+      a.download = `uncle-transactions-${selectedCountry}-${ts}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("CSV exported.");
+    } finally {
+      setExporting(false);
+    }
   };
 
   if (isLoading) {
@@ -96,15 +103,15 @@ export default function Dashboard() {
       toast.error("Please fill in all required fields");
       return;
     }
-
     try {
+      setAdding(true);
       await createTransaction({
         amount: parseFloat(newTransaction.amount),
         description: newTransaction.description,
         type: newTransaction.type,
         category: newTransaction.category || "general",
         country: selectedCountry,
-        taxRate: newTransaction.type === "income" ? 18 : 0, // GST for India
+        taxRate: newTransaction.type === "income" ? 18 : 0,
       });
 
       setNewTransaction({
@@ -117,6 +124,8 @@ export default function Dashboard() {
       toast.success("Transaction added successfully!");
     } catch (error) {
       toast.error("Failed to add transaction");
+    } finally {
+      setAdding(false);
     }
   };
 
@@ -153,8 +162,15 @@ export default function Dashboard() {
                 <option value="IN">🇮🇳 India</option>
                 <option value="SA">🇸🇦 Saudi Arabia</option>
               </select>
-              <Button variant="outline" onClick={exportCsv}>
-                Export CSV
+              <Button variant="outline" onClick={exportCsv} disabled={exporting}>
+                {exporting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Exporting…
+                  </>
+                ) : (
+                  "Export CSV"
+                )}
               </Button>
             </div>
           </div>
@@ -299,8 +315,15 @@ export default function Dashboard() {
                   onChange={(e) => setNewTransaction(prev => ({ ...prev, category: e.target.value }))}
                 />
                 
-                <Button onClick={handleAddTransaction} className="w-full">
-                  Add Transaction
+                <Button onClick={handleAddTransaction} className="w-full" disabled={adding}>
+                  {adding ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Adding…
+                    </>
+                  ) : (
+                    "Add Transaction"
+                  )}
                 </Button>
               </CardContent>
             </Card>
