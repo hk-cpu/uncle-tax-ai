@@ -117,9 +117,6 @@ export default function Landing() {
             
             {/* Desktop Nav */}
             <div className="hidden md:flex items-center space-x-6">
-              <a href="#hero" className="text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">
-                Hero
-              </a>
               <a href="#features" className="text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">
                 Features
               </a>
@@ -176,11 +173,6 @@ export default function Landing() {
                     </SheetTitle>
                   </SheetHeader>
                   <div className="mt-6 flex flex-col gap-3">
-                    <SheetClose asChild>
-                      <a href="#hero" className="text-base text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400">
-                        Hero
-                      </a>
-                    </SheetClose>
                     <SheetClose asChild>
                       <a href="#features" className="text-base text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400">
                         Features
@@ -250,123 +242,8 @@ export default function Landing() {
       </header>
 
       {/* Hero Section */}
-      <section id="hero" className="relative overflow-hidden py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="mb-8"
-            >
-              {/* Added acronym expansion */}
-              <p className="text-sm md:text-base text-blue-600/80 dark:text-blue-300/80 tracking-wide uppercase mb-2">
-                UNCLE — Unified Numbers, Compliance & Ledger Engine
-              </p>
-              <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-6">
-                Your AI Tax Assistant
-              </h1>
-              <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
-                UNCLE makes tax management effortless for shopkeepers. Send transactions via WhatsApp, 
-                get instant tax calculations, and generate professional reports.
-              </p>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="flex flex-col sm:flex-row gap-4 justify-center mb-12"
-            >
-              <Button 
-                size="lg" 
-                onClick={async () => {
-                  setLoadingBtn("hero_primary");
-                  try { navigate(isAuthenticated ? "/dashboard" : "/auth"); } finally { setLoadingBtn(null); }
-                }}
-                disabled={loadingBtn === "hero_primary"}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-lg px-8 py-6"
-              >
-                {loadingBtn === "hero_primary" ? (
-                  <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    {isAuthenticated ? "Opening Dashboard…" : "Starting…"}
-                  </>
-                ) : (
-                  <>
-                    {isAuthenticated ? "Go to Dashboard" : "Start Free Trial"}
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </>
-                )}
-              </Button>
-              <Button 
-                size="lg" 
-                variant="outline"
-                className="text-lg px-8 py-6 border-2"
-                onClick={async () => {
-                  setLoadingBtn("demo");
-                  try {
-                    // Simulate loading before navigating/opening demo
-                    // Replace with actual demo logic if available
-                    await new Promise((r) => setTimeout(r, 700));
-                    window.open("https://www.youtube.com/results?search_query=uncle+ai+tax+assistant+demo", "_blank");
-                  } finally {
-                    setLoadingBtn(null);
-                  }
-                }}
-                disabled={loadingBtn === "demo"}
-              >
-                {loadingBtn === "demo" ? (
-                  <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Loading Demo…
-                  </>
-                ) : (
-                  "Watch Demo"
-                )}
-              </Button>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.6 }}
-              className="relative"
-            >
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-4xl mx-auto">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="text-center">
-                    <div className="bg-green-100 dark:bg-green-900 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                      <MessageSquare className="h-8 w-8 text-green-600" />
-                    </div>
-                    <h3 className="font-semibold mb-2">Send via WhatsApp</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      "Sold 5 items for ₹500"
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <div className="bg-blue-100 dark:bg-blue-900 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                      <Calculator className="h-8 w-8 text-blue-600" />
-                    </div>
-                    <h3 className="font-semibold mb-2">AI Processes</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Automatic categorization & tax calculation
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <div className="bg-purple-100 dark:bg-purple-900 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                      <FileText className="h-8 w-8 text-purple-600" />
-                    </div>
-                    <h3 className="font-semibold mb-2">Get Reports</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Professional tax reports instantly
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </div>
+      <section id="hero" className="hidden">
+        {/* Hero section hidden per request */}
       </section>
 
       {/* Features Section */}
