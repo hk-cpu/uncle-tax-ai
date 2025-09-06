@@ -304,17 +304,19 @@ export default function Landing() {
                 variant="outline"
                 className="text-lg px-8 py-6 border-2"
                 onClick={async () => {
-                  setLoadingBtn("hero_demo");
+                  setLoadingBtn("demo");
                   try {
-                    await new Promise((r) => setTimeout(r, 600));
+                    // Simulate loading before navigating/opening demo
+                    // Replace with actual demo logic if available
+                    await new Promise((r) => setTimeout(r, 700));
                     window.open("https://www.youtube.com/results?search_query=uncle+ai+tax+assistant+demo", "_blank");
                   } finally {
                     setLoadingBtn(null);
                   }
                 }}
-                disabled={loadingBtn === "hero_demo"}
+                disabled={loadingBtn === "demo"}
               >
-                {loadingBtn === "hero_demo" ? (
+                {loadingBtn === "demo" ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                     Loading Demo…
@@ -447,11 +449,36 @@ export default function Landing() {
                 </p>
                 <Button 
                   size="lg" 
-                  onClick={() => navigate(isAuthenticated ? "/dashboard" : "/auth")}
+                  onClick={async () => {
+                    setLoadingBtn("benefits_cta");
+                    try { navigate(isAuthenticated ? "/dashboard" : "/auth"); } finally { setLoadingBtn(null); }
+                  }}
+                  disabled={loadingBtn === "benefits_cta"}
                   className="bg-white text-blue-600 hover:bg-gray-100 w-full"
                 >
-                  {isAuthenticated ? "Go to Dashboard" : "Start Your Free Trial"}
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                  {isAuthenticated ? (
+                    loadingBtn === "benefits_cta" ? (
+                      <>
+                        <Loader2 className="ml-0 mr-2 h-5 w-5 animate-spin" />
+                        Opening Dashboard…
+                      </>
+                    ) : (
+                      <>
+                        Go to Dashboard
+                        <ArrowRight className="ml-2 h-5 w-5" />
+                      </>
+                    )
+                  ) : loadingBtn === "benefits_cta" ? (
+                    <>
+                      <Loader2 className="ml-0 mr-2 h-5 w-5 animate-spin" />
+                      Starting…
+                    </>
+                  ) : (
+                    <>
+                      Start Your Free Trial
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </>
+                  )}
                 </Button>
               </div>
             </motion.div>
@@ -529,8 +556,8 @@ export default function Landing() {
                       className={`w-full ${plan.recommended ? "bg-blue-600 hover:bg-blue-700" : ""}`}
                       variant={plan.recommended ? "default" : "outline"}
                       onClick={async () => {
-                        const key = `pricing_${plan.name}`;
-                        setLoadingBtn(key);
+                        const id = `pricing_${plan.name}`;
+                        setLoadingBtn(id);
                         try { navigate(isAuthenticated ? "/dashboard" : "/auth"); } finally { setLoadingBtn(null); }
                       }}
                       disabled={loadingBtn === `pricing_${plan.name}`}
