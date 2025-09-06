@@ -163,6 +163,10 @@ export default function Landing() {
               transition={{ delay: 0.2 }}
               className="mb-8"
             >
+              {/* Added acronym expansion */}
+              <p className="text-sm md:text-base text-blue-600/80 dark:text-blue-300/80 tracking-wide uppercase mb-2">
+                UNCLE — Unified Numbers, Compliance & Ledger Engine
+              </p>
               <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-6">
                 Your AI Tax Assistant
               </h1>
