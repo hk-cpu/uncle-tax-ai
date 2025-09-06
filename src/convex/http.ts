@@ -10,50 +10,106 @@ const http = typeof (globalThis as any).__httpRouter !== "undefined"
   : (globalThis as any).__httpRouter = httpRouter();
 
 // Helper to send a WhatsApp message via Meta Graph API
-async function sendWhatsAppText(to: string, body: string) {
+async function sendWhatsAppText(to: string, body: string): Promise<boolean> {
   const token = process.env.WHATSAPP_TOKEN;
   const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
 
   if (!token || !phoneNumberId) {
     console.warn("WhatsApp send skipped: missing WHATSAPP_TOKEN or WHATSAPP_PHONE_NUMBER_ID");
-    return;
+    return false;
   }
 
-  // Ensure recipient and body are safe, non-empty strings
   const safeTo = String(to ?? "").trim();
   const safeBody = String(body ?? "").slice(0, 4000).trim();
 
   if (!safeTo) {
     console.warn("WhatsApp send skipped: empty 'to' phone number");
-    return;
+    return false;
   }
   if (!safeBody) {
     console.warn("WhatsApp send skipped: empty message body");
-    return;
+    return false;
   }
 
   const url = `https://graph.facebook.com/v20.0/${phoneNumberId}/messages`;
   try {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
+    const res = await postWithRetry(
+      url,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messaging_product: "whatsapp",
+          to: safeTo,
+          type: "text",
+          text: { body: safeBody },
+        }),
+        timeoutMs: 8000,
       },
-      body: JSON.stringify({
-        messaging_product: "whatsapp",
-        to: safeTo,
-        type: "text",
-        text: { body: safeBody },
-      }),
-    });
+      2,
+    );
 
     if (!res.ok) {
-      const text = await res.text().catch(() => "");
-      console.error("WhatsApp send failed", { status: res.status, statusText: res.statusText, body: text });
+      let errBody = "";
+      try {
+        // Try parse JSON first for Graph API error details
+        const asJson = await res.clone().json();
+        errBody = JSON.stringify(asJson);
+      } catch {
+        errBody = await res.text().catch(() => "");
+      }
+      console.error("WhatsApp send failed", {
+        status: res.status,
+        statusText: res.statusText,
+        body: errBody?.slice(0, 2000),
+      });
+      return false;
     }
+    return true;
+  } catch (err: any) {
+    console.error("WhatsApp send error", {
+      message: err?.message ?? String(err),
+      name: err?.name,
+      cause: err?.cause ? String(err.cause) : undefined,
+    });
+    return false;
+  }
+}
+
+// Add a generic POST with retry helper and timeout
+async function postWithRetry(
+  url: string,
+  init: RequestInit & { timeoutMs?: number } = {},
+  retries = 2,
+  attempt = 0
+): Promise<Response> {
+  const { timeoutMs = 6000, ...rest } = init;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(new Error("timeout")), timeoutMs);
+
+  try {
+    const res = await fetch(url, { ...rest, signal: controller.signal });
+    // Retry on 429 or 5xx
+    if ((res.status === 429 || (res.status >= 500 && res.status < 600)) && retries > 0) {
+      const retryAfter = Number(res.headers.get("retry-after")) || 0;
+      const backoff = Math.min(2000 * Math.pow(2, attempt), 8000);
+      const delay = Math.max(retryAfter * 1000, backoff);
+      await new Promise((r) => setTimeout(r, delay));
+      return postWithRetry(url, init, retries - 1, attempt + 1);
+    }
+    return res;
   } catch (err) {
-    console.error("WhatsApp send error", err);
+    if (retries > 0) {
+      const backoff = Math.min(2000 * Math.pow(2, attempt), 8000);
+      await new Promise((r) => setTimeout(r, backoff));
+      return postWithRetry(url, init, retries - 1, attempt + 1);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
@@ -86,9 +142,18 @@ http.route({
   method: "POST",
   handler: httpAction(async (ctx, req) => {
     try {
-      const body = await req.json().catch(() => null);
+      const contentType = req.headers.get("content-type") ?? "";
+      if (!contentType.toLowerCase().includes("application/json")) {
+        console.warn("Webhook received invalid content-type", { contentType });
+        return new Response("EVENT_RECEIVED", { status: 200 });
+      }
+
+      const body = await req.json().catch((e) => {
+        console.warn("Webhook JSON parse error", { error: String(e) });
+        return null;
+      });
       if (!body || !Array.isArray(body?.entry)) {
-        console.warn("Webhook received invalid body");
+        console.warn("Webhook received invalid body shape");
         return new Response("EVENT_RECEIVED", { status: 200 });
       }
 
@@ -160,7 +225,11 @@ http.route({
 
       return new Response("EVENT_RECEIVED", { status: 200 });
     } catch (err) {
-      console.error("WhatsApp webhook error:", err);
+      console.error("WhatsApp webhook error:", {
+        message: (err as any)?.message ?? String(err),
+        name: (err as any)?.name,
+      });
+      // Always 200 to avoid provider retries; errors are fully logged.
       return new Response("EVENT_RECEIVED", { status: 200 });
     }
   }),
