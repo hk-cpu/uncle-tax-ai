@@ -26,6 +26,8 @@ export default function Dashboard() {
   const [adding, setAdding] = useState(false);
   const [showConnect, setShowConnect] = useState(false);
   const [verifyToken, setVerifyToken] = useState("change-me-secure-token");
+  const [phoneInput, setPhoneInput] = useState(user?.phoneNumber ?? "");
+  const updateWhatsAppConnection = useMutation(api.users.updateWhatsAppConnection);
   
   const transactions = useQuery(api.transactions.list, { 
     limit: 10, 
@@ -453,6 +455,49 @@ export default function Dashboard() {
             </DialogHeader>
 
             <div className="space-y-4">
+              {user?.whatsappConnected ? (
+                <div className="rounded-md bg-green-50 text-green-700 border border-green-200 p-3 text-sm">
+                  Connected to {user.phoneNumber || "unknown number"}
+                </div>
+              ) : (
+                <div className="rounded-md bg-yellow-50 text-yellow-700 border border-yellow-200 p-3 text-sm">
+                  Not connected yet
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-900">Your WhatsApp phone number</label>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="e.g. 919812345678 (E.164 format, no +)"
+                    value={phoneInput}
+                    onChange={(e) => setPhoneInput(e.target.value)}
+                  />
+                  <Button
+                    onClick={async () => {
+                      try {
+                        if (!phoneInput.trim()) {
+                          toast.error("Enter your phone number");
+                          return;
+                        }
+                        await updateWhatsAppConnection({
+                          phoneNumber: phoneInput.trim(),
+                          connected: true,
+                        });
+                        toast.success("Saved and linked your WhatsApp transactions");
+                      } catch (e) {
+                        toast.error("Failed to save phone number");
+                      }
+                    }}
+                  >
+                    Save & Link
+                  </Button>
+                </div>
+                <p className="text-xs text-gray-500">
+                  Use E.164 without the +. Example: 14155552671 (US), 919812345678 (IN), 9665XXXXXXXX (SA)
+                </p>
+              </div>
+
               <div>
                 <p className="text-sm font-medium text-gray-900">1) Add your webhook to Meta</p>
                 <ol className="mt-2 list-decimal list-inside text-sm text-gray-700 space-y-1">
