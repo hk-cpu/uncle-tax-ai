@@ -30,16 +30,11 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [email, setEmail] = useState("");
-  const [emailError, setEmailError] = useState<string | null>(null);
 
-  // Simple email validator
-  function validateEmail(value: string) {
-    // Standard robust email regex
-    const re =
-      /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
-    return re.test(value.trim());
-  }
+  // Add controlled email state and validator
+  const [email, setEmail] = useState("");
+  const isValidEmail = (value: string) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
@@ -50,19 +45,16 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
 
   const handleEmailSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    // Validate before submitting
-    if (!email.trim()) {
-      setEmailError("Email is required.");
-      return;
-    }
-    if (!validateEmail(email)) {
-      setEmailError("Please enter a valid email address.");
+    setIsLoading(true);
+    setError(null);
+
+    // Validate email before submitting
+    if (!isValidEmail(email)) {
+      setError("Please enter a valid email address.");
+      setIsLoading(false);
       return;
     }
 
-    setIsLoading(true);
-    setError(null);
-    setEmailError(null);
     try {
       const formData = new FormData(event.currentTarget);
       await signIn("email-otp", formData);
@@ -144,8 +136,9 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                   Enter your email to log in or sign up
                 </CardDescription>
               </CardHeader>
-              <form onSubmit={handleEmailSubmit} noValidate>
+              <form onSubmit={handleEmailSubmit}>
                 <CardContent>
+                  
                   <div className="relative flex items-center gap-2">
                     <div className="relative flex-1">
                       <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -156,31 +149,25 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                         className="pl-9"
                         disabled={isLoading}
                         required
+                        // Controlled and validated
                         value={email}
                         onChange={(e) => {
-                          setEmail(e.target.value);
-                          if (emailError) setEmailError(null);
+                          const val = e.target.value;
+                          setEmail(val);
+                          // Clear error as user corrects input
+                          if (error && isValidEmail(val)) setError(null);
                         }}
-                        onBlur={() => {
-                          if (!email.trim()) {
-                            setEmailError("Email is required.");
-                          } else if (!validateEmail(email)) {
-                            setEmailError("Please enter a valid email address.");
-                          } else {
-                            setEmailError(null);
-                          }
-                        }}
-                        aria-invalid={emailError ? "true" : "false"}
+                        aria-invalid={!!error && !isValidEmail(email)}
+                        inputMode="email"
+                        autoComplete="email"
                       />
-                      {emailError && (
-                        <p className="mt-1 text-xs text-red-500">{emailError}</p>
-                      )}
                     </div>
                     <Button
                       type="submit"
                       variant="outline"
                       size="icon"
-                      disabled={isLoading || !email || !!emailError || !validateEmail(email)}
+                      disabled={isLoading || !isValidEmail(email)}
+                      title={!isValidEmail(email) ? "Enter a valid email" : undefined}
                     >
                       {isLoading ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -235,7 +222,12 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                   <div className="flex justify-center">
                     <InputOTP
                       value={otp}
-                      onChange={setOtp}
+                      onChange={(val) => {
+                        // Sanitize to 6 numeric digits
+                        const sanitized = val.replace(/\D/g, "").slice(0, 6);
+                        setOtp(sanitized);
+                        if (error && sanitized.length === 6) setError(null);
+                      }}
                       maxLength={6}
                       disabled={isLoading}
                       onKeyDown={(e) => {
@@ -276,6 +268,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                     type="submit"
                     className="w-full"
                     disabled={isLoading || otp.length !== 6}
+                    title={otp.length !== 6 ? "Enter the 6-digit code" : undefined}
                   >
                     {isLoading ? (
                       <>
@@ -292,7 +285,11 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                   <Button
                     type="button"
                     variant="ghost"
-                    onClick={() => setStep("signIn")}
+                    onClick={() => {
+                      setOtp("");
+                      setError(null);
+                      setStep("signIn");
+                    }}
                     disabled={isLoading}
                     className="w-full"
                   >
