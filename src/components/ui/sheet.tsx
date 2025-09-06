@@ -44,20 +44,28 @@ function SheetOverlay({
 
 function SheetContent({
   className,
-  // Accept side prop for compatibility, don't forward to DOM
   side,
-  ...props
-}: React.ComponentProps<"div"> & { side?: "top" | "bottom" | "left" | "right" }) {
+  children,
+  ...rest
+}: React.ComponentProps<typeof SheetPrimitive.Content> & { side?: "top" | "bottom" | "left" | "right" }) {
   return (
-    <div
+    <SheetPrimitive.Content
+      data-slot="sheet-content"
+      data-side={side}
       className={cn(
-        "transition-all duration-300 will-change-transform will-change-opacity",
-        "data-[state=open]:opacity-100 data-[state=closed]:opacity-0",
-        "data-[state=open]:translate-x-0 data-[state=closed]:translate-x-2",
+        "fixed z-50 bg-background p-0 shadow-lg outline-none",
+        "transition-transform duration-300 will-change-transform",
+        // Position + slide based on side
+        side === "right" && "right-0 top-0 h-full translate-x-2 data-[state=open]:translate-x-0",
+        side === "left" && "left-0 top-0 h-full -translate-x-2 data-[state=open]:translate-x-0",
+        side === "bottom" && "bottom-0 left-0 right-0 translate-y-2 data-[state=open]:translate-y-0",
+        (!side || side === "top") && "top-0 left-0 right-0 -translate-y-2 data-[state=open]:translate-y-0",
         className
       )}
-      {...props}
-    />
+      {...rest}
+    >
+      {children}
+    </SheetPrimitive.Content>
   )
 }
 

@@ -110,13 +110,13 @@ export default function Landing() {
               <img
                 src="https://harmless-tapir-303.convex.cloud/api/storage/bcbdad4d-5195-48b1-9334-b7c21a475144"
                 alt="UNCLE — Your tax‑savvy uncle on WhatsApp"
-                className="h-10 w-auto rounded-md cursor-pointer"
+                className="h-8 w-auto sm:h-10 rounded-md cursor-pointer"
                 onClick={() => navigate("/")}
               />
             </div>
             
             {/* Desktop Nav */}
-            <div className="hidden md:flex items-center space-x-6">
+            <nav aria-label="Main" className="hidden md:flex items-center space-x-6">
               <a href="#features" className="text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">
                 Features
               </a>
@@ -151,17 +151,17 @@ export default function Landing() {
                   {loadingBtn === "header" ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading…</>) : "Get Started"}
                 </Button>
               )}
-            </div>
+            </nav>
 
             {/* Mobile Menu */}
             <div className="md:hidden">
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button variant="outline" size="icon" aria-label="Open menu">
+                  <Button variant="outline" size="icon" aria-label="Open menu" aria-controls="mobile-menu">
                     <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-72">
+                <SheetContent side="right" className="w-[85vw] max-w-sm sm:w-80" id="mobile-menu">
                   <SheetHeader>
                     <SheetTitle className="flex items-center gap-2">
                       <img

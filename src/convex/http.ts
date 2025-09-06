@@ -1,3 +1,5 @@
+"use node";
+
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
 import { api } from "./_generated/api";
@@ -16,6 +18,19 @@ async function sendWhatsAppText(to: string, body: string) {
     return;
   }
 
+  // Ensure recipient and body are safe, non-empty strings
+  const safeTo = String(to ?? "").trim();
+  const safeBody = String(body ?? "").slice(0, 4000).trim();
+
+  if (!safeTo) {
+    console.warn("WhatsApp send skipped: empty 'to' phone number");
+    return;
+  }
+  if (!safeBody) {
+    console.warn("WhatsApp send skipped: empty message body");
+    return;
+  }
+
   const url = `https://graph.facebook.com/v20.0/${phoneNumberId}/messages`;
   try {
     const res = await fetch(url, {
@@ -26,9 +41,9 @@ async function sendWhatsAppText(to: string, body: string) {
       },
       body: JSON.stringify({
         messaging_product: "whatsapp",
-        to,
+        to: safeTo,
         type: "text",
-        text: { body },
+        text: { body: safeBody },
       }),
     });
 
@@ -110,7 +125,8 @@ http.route({
             messageId,
           });
 
-          const reply = result?.response || "✅ Received.";
+          const replyRaw = typeof result?.response === "string" ? result.response : "✅ Received.";
+          const reply = replyRaw.slice(0, 4000);
           await sendWhatsAppText(phoneNumber, reply);
         } catch (perMessageErr) {
           console.error("Error processing individual message", perMessageErr);

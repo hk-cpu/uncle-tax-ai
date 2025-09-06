@@ -1,7 +1,6 @@
 import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { XIcon } from "lucide-react"
-import { motion } from "framer-motion"
 
 import { cn } from "@/lib/utils"
 
@@ -37,9 +36,7 @@ function DialogOverlay({
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
       className={cn(
-        "fixed inset-0 z-50 bg-black/50 backdrop-blur-sm",
-        "data-[state=open]:animate-in data-[state=closed]:animate-out",
-        "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/50",
         className
       )}
       {...props}
@@ -50,37 +47,31 @@ function DialogOverlay({
 function DialogContent({
   className,
   showCloseButton,
-  ...props
-}: React.ComponentProps<"div"> & { showCloseButton?: boolean }) {
+  children,
+  ...rest
+}: React.ComponentProps<typeof DialogPrimitive.Content> & { showCloseButton?: boolean }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.98, y: 8 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.98, y: 8 }}
-      transition={{ type: "spring", stiffness: 300, damping: 28 }}
+    <DialogPrimitive.Content
+      data-slot="dialog-content"
       className={cn(
-        "transition-all duration-300 will-change-transform will-change-opacity",
-        "data-[state=open]:opacity-100 data-[state=closed]:opacity-0",
-        "data-[state=open]:scale-100 data-[state=closed]:scale-95",
-        "data-[state=open]:translate-y-0 data-[state=closed]:translate-y-2",
-        "bg-background text-foreground rounded-xl shadow-xl border p-4 sm:p-6",
-        "mx-4 sm:mx-auto w-auto max-w-lg",
+        "fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-lg bg-background p-6 shadow-lg outline-none",
+        "data-[state=open]:animate-in data-[state=closed]:animate-out",
+        "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+        "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
         className
       )}
-      {...props}
+      {...rest}
     >
+      {children}
       {showCloseButton && (
-        <DialogClose
-          className={cn(
-            "absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-md",
-            "text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-          )}
+        <DialogPrimitive.Close
+          className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring"
           aria-label="Close"
         >
           <XIcon className="h-4 w-4" />
-        </DialogClose>
+        </DialogPrimitive.Close>
       )}
-    </motion.div>
+    </DialogPrimitive.Content>
   )
 }
 

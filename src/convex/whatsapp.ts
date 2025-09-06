@@ -16,6 +16,14 @@ export const processMessage = action({
       const text = args.message.trim();
       const lower = text.toLowerCase();
 
+      // Basic validation & guardrails
+      if (!text) {
+        return { success: false, response: "Please send a valid text message." };
+      }
+      if (text.length > 1000) {
+        return { success: false, response: "Your message is too long. Please keep it under 1000 characters." };
+      }
+
       if (lower.startsWith("undo")) {
         try {
           const res = await ctx.runMutation(internalAny.whatsapp.deleteLastByPhone, { phoneNumber: args.phoneNumber });
