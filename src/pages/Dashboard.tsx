@@ -28,6 +28,7 @@ export default function Dashboard() {
   const [verifyToken, setVerifyToken] = useState("change-me-secure-token");
   const [phoneInput, setPhoneInput] = useState(user?.phoneNumber ?? "");
   const updateWhatsAppConnection = useMutation(api.users.updateWhatsAppConnection);
+  const [savingPhone, setSavingPhone] = useState(false);
   
   const transactions = useQuery(api.transactions.list, { 
     limit: 10, 
@@ -480,6 +481,7 @@ export default function Dashboard() {
                           toast.error("Enter your phone number");
                           return;
                         }
+                        setSavingPhone(true);
                         await updateWhatsAppConnection({
                           phoneNumber: phoneInput.trim(),
                           connected: true,
@@ -487,10 +489,20 @@ export default function Dashboard() {
                         toast.success("Saved and linked your WhatsApp transactions");
                       } catch (e) {
                         toast.error("Failed to save phone number");
+                      } finally {
+                        setSavingPhone(false);
                       }
                     }}
+                    disabled={savingPhone}
                   >
-                    Save & Link
+                    {savingPhone ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Saving…
+                      </>
+                    ) : (
+                      "Save & Link"
+                    )}
                   </Button>
                 </div>
                 <p className="text-xs text-gray-500">
