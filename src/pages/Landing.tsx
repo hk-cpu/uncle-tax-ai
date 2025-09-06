@@ -130,7 +130,7 @@ export default function Landing() {
                     <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-72">
+                <SheetContent side="right" className="w-[85vw] max-w-sm p-4">
                   <SheetHeader>
                     <SheetTitle className="flex items-center gap-2">
                       <img
@@ -211,7 +211,7 @@ export default function Landing() {
       </header>
 
       {/* Hero Section */}
-      <section id="hero" className="relative overflow-hidden py-20">
+      <section id="hero" className="relative overflow-hidden py-16 sm:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <motion.div
@@ -224,10 +224,10 @@ export default function Landing() {
               <p className="text-sm md:text-base text-blue-600/80 dark:text-blue-300/80 tracking-wide uppercase mb-2">
                 UNCLE — Unified Numbers, Compliance & Ledger Engine
               </p>
-              <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-6">
+              <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-6">
                 Your AI Tax Assistant
               </h1>
-              <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
+              <p className="text-lg md:text-2xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
                 UNCLE makes tax management effortless for shopkeepers. Send transactions via WhatsApp, 
                 get instant tax calculations, and generate professional reports.
               </p>
@@ -237,7 +237,7 @@ export default function Landing() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="flex flex-col sm:flex-row gap-4 justify-center mb-12"
+              className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center mb-12"
             >
               <Button 
                 size="lg" 
@@ -246,7 +246,7 @@ export default function Landing() {
                   try { navigate(isAuthenticated ? "/dashboard" : "/auth"); } finally { setCtaLoading(false); }
                 }}
                 disabled={ctaLoading}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-lg px-8 py-6"
+                className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-lg px-8 py-6"
               >
                 {ctaLoading ? (
                   <>
@@ -263,7 +263,7 @@ export default function Landing() {
               <Button 
                 size="lg" 
                 variant="outline"
-                className="text-lg px-8 py-6 border-2"
+                className="w-full sm:w-auto text-lg px-8 py-6 border-2"
               >
                 Watch Demo
               </Button>
@@ -275,8 +275,8 @@ export default function Landing() {
               transition={{ delay: 0.6 }}
               className="relative"
             >
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-4xl mx-auto">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 sm:p-8 max-w-4xl mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
                   <div className="text-center">
                     <div className="bg-green-100 dark:bg-green-900 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
                       <MessageSquare className="h-8 w-8 text-green-600" />
@@ -323,7 +323,7 @@ export default function Landing() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
             {features.map((feature, index) => (
               <motion.div
                 key={index}
@@ -353,7 +353,7 @@ export default function Landing() {
       {/* Benefits Section */}
       <section id="benefits" className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
             <motion.div
               initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
@@ -404,7 +404,7 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-white text-gray-700 border-t py-12">
+      <footer className="bg-white text-gray-700 border-t py-10 sm:py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <div className="flex items-center justify-center space-x-3 mb-4">
