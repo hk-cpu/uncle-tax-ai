@@ -285,6 +285,26 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* API Keys Visual */}
+      <section id="api-keys-visual" className="py-12 bg-gray-50">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="mb-6">
+            <h3 className="text-2xl font-semibold text-gray-900">API Keys Overview</h3>
+            <p className="text-gray-600">
+              Quick reference: where keys live across frontend and backend.
+            </p>
+          </div>
+          <div className="rounded-xl border bg-white p-4 shadow-sm">
+            <img
+              src="https://harmless-tapir-303.convex.cloud/api/storage/1ccbc17d-bb7a-4fbe-babe-6cf9b909c426"
+              alt="API Keys overview for Frontend and Backend"
+              className="w-full h-auto rounded-lg"
+              loading="lazy"
+            />
+          </div>
+        </div>
+      </section>
+
       {/* Benefits Section */}
       <section id="benefits" className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
