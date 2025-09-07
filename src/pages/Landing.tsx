@@ -23,6 +23,7 @@ export default function Landing() {
   const navigate = useNavigate();
   const [loadingBtn, setLoadingBtn] = useState<string | null>(null);
   const [billing, setBilling] = useState<"monthly" | "yearly">("monthly");
+  const appName = (import.meta as any).env.VITE_APP_NAME ?? "UNCLE";
 
   const features = [
     {
@@ -169,7 +170,7 @@ export default function Landing() {
                         alt="UNCLE logo"
                         className="h-8 w-auto rounded-md"
                       />
-                      UNCLE
+                      {appName}
                     </SheetTitle>
                   </SheetHeader>
                   <div className="mt-6 flex flex-col gap-3">
@@ -484,7 +485,7 @@ export default function Landing() {
               <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-xl">
                 <Calculator className="h-6 w-6 text-white" />
               </div>
-              <span className="text-2xl font-bold">UNCLE</span>
+              <span className="text-2xl font-bold">{appName}</span>
             </div>
             <p className="text-gray-400 mb-4">
               Your AI Tax Assistant for Effortless Business Management

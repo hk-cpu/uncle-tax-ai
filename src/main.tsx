@@ -19,6 +19,9 @@ const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
  // Ensure light theme by default
 if (typeof document !== "undefined") {
   document.documentElement.classList.remove("dark");
+  // Set document title from env
+  const appName = (import.meta as any).env.VITE_APP_NAME ?? "UNCLE";
+  if (document.title !== appName) document.title = appName;
 }
 
 function RouteSyncer() {

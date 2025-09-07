@@ -29,7 +29,8 @@ export default function Dashboard() {
   const [phoneInput, setPhoneInput] = useState(user?.phoneNumber ?? "");
   const updateWhatsAppConnection = useMutation(api.users.updateWhatsAppConnection);
   const [savingPhone, setSavingPhone] = useState(false);
-  
+  const appName = (import.meta as any).env.VITE_APP_NAME ?? "UNCLE";
+
   const transactions = useQuery(api.transactions.list, { 
     limit: 10, 
     country: selectedCountry 
@@ -163,7 +164,7 @@ export default function Dashboard() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  UNCLE Dashboard
+                  {appName} Dashboard
                 </h1>
                 <p className="text-gray-600 dark:text-gray-400">
                   Welcome back, {user?.name || "Shopkeeper"}
